@@ -69,7 +69,7 @@ public final class CheckStore: ObservableObject {
                 at: fileURL.deletingLastPathComponent(),
                 withIntermediateDirectories: true
             )
-            let data = try encoder.encode(ChecksFile(checks: checks))
+            let data = try encoder.encode(ChecksFile(version: ChecksFile.currentVersion, checks: checks))
             try data.write(to: fileURL, options: .atomic)
         } catch {
             // Non-fatal for a menubar utility.

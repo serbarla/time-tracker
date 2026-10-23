@@ -7,6 +7,8 @@ struct OverlapTimeline: View {
     let bands: [DateInterval]
     let now: Date
     let isOverlapping: Bool
+    /// Band/marker color while overlapping (v1 default: green).
+    var activeColor: Color = .green
 
     private var localCalendar: Calendar {
         var c = Calendar(identifier: .gregorian)
@@ -22,7 +24,7 @@ struct OverlapTimeline: View {
             )
 
             let bandColor: Color = isOverlapping
-                ? Color.green.opacity(0.65)
+                ? activeColor.opacity(0.65)
                 : Color.secondary.opacity(0.35)
 
             let dayStart = localCalendar.startOfDay(for: now)
@@ -51,7 +53,7 @@ struct OverlapTimeline: View {
             let marker = CGRect(x: nx - 1, y: 0, width: 2, height: size.height)
             context.fill(
                 Path(marker),
-                with: .color(isOverlapping ? Color.green : Color.secondary.opacity(0.7))
+                with: .color(isOverlapping ? activeColor : Color.secondary.opacity(0.7))
             )
         }
         .clipShape(RoundedRectangle(cornerRadius: 3))

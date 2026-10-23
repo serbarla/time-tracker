@@ -64,19 +64,31 @@ struct EditTab: View {
                 }
             }
             Divider()
-            Button {
-                editing = EditorSession(
-                    initial: Check(
-                        name: "New check",
-                        timeZoneIdentifier: TimeZone.current.identifier,
-                        schedule: Check.emptySchedule
-                    ),
-                    isNew: true
-                )
-            } label: {
-                Label("Add Zona", systemImage: "plus")
+            HStack(spacing: 8) {
+                Button {
+                    editing = EditorSession(
+                        initial: Check(
+                            name: "New check",
+                            timeZoneIdentifier: TimeZone.current.identifier,
+                            schedule: Check.emptySchedule
+                        ),
+                        isNew: true
+                    )
+                } label: {
+                    Label("Add Zona", systemImage: "plus")
+                }
+                .buttonStyle(.borderedProminent)
+
+                Menu {
+                    Button("DeepSeek pricing") {
+                        store.add(CheckPresets.deepSeekPricing())
+                    }
+                } label: {
+                    Label("Add preset", systemImage: "wand.and.stars")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
-            .buttonStyle(.borderedProminent)
             .controlSize(.small)
             .padding(8)
         }

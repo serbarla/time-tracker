@@ -1,6 +1,6 @@
 # Time Tracker (Menubar macOS) — Plan
 
-Status: **v4 — complete. Built, tested, packaged.**
+Status: **v5 — complete. Built, tested, packaged (2026-10-23).**
 
 ## Decisions (Q&A log)
 
@@ -133,3 +133,99 @@ Notes:
 - Checks persist to `~/Library/Application Support/TimeTracker/checks.json`.
 - Launch-at-login requires running the `.app` bundle (bundle id `com.sergiobarba.timetracker`, ad-hoc signed).
 - Default shortcut ⌃⌥T toggles the menu; edit `setupHotKey()` in `Sources/TimeTrackerApp/TimeTrackerApp.swift` to remap.
+
+## v5 — pricing-window alignment (implemented 2026-10-23)
+
+Status: **implemented** — specs 01–05 in `context/specs/` are checked off. The
+"DeepSeek pricing" preset ships in the Edit tab as ordinary check data.
+
+Source: comparison against https://github.com/deepakness/deepseek-price-clock (Chrome MV3
+extension; DeepSeek API peak/off-peak pricing). Goal: bring its business logic into our
+engine **without special-casing DeepSeek** — checks stay user-defined names + IANA zones.
+DeepSeek becomes one preset check, never engine code.
+
+### What the extension does that we don't
+
+- Two **named states** ("Peak pricing" / "Off-peak · half price") over one window machine:
+  peak = 01:00–04:00 and 06:00–10:00 UTC; everything else off-peak.
+- **Day-level overrides**: Beijing weekends and Chinese public-holiday date ranges force
+  off-peak all day (`CN_HOLIDAYS` as inclusive date pairs).
+- **Transition-centric UI**: countdown to next flip, progress through the current window,
+  upcoming-window schedule table, current/next rate tables (six rows, Flash/Pro input,
+  cached input, output; peak is exactly 2× off-peak in every row).
+- **State-driven feedback**: toolbar icon green/red by state; tooltip with flip time.
+- **Flip notification** (optional) with a 5-minute staleness grace window
+  (`NOTIFY_GRACE_MS`) so flips missed during sleep are not announced late.
+- **Boundary-aligned refresh**: minute tick plus an exact alarm at the switch instant.
+
+### What we keep / don't adopt
+
+- Keep: multi-check, arbitrary IANA zones, per-weekday ranges, half-open/overnight rules,
+  JSON store, in-panel editing, hotkey, launch-at-login.
+- Don't adopt: Chrome plumbing (alarms/permissions/workers), hardcoded brand icons and
+  rate values in engine code, `WEEKEND_RULE_START` rule versioning (matters only for
+  historical evaluation; we evaluate now→future only).
+
+### Generalized model
+
+Both apps are the same machine: named states over absolute instants. Our `HourRange`
+membership = the active window set; its complement = the inactive state. DeepSeek is
+already expressible as a check today: zone `Asia/Shanghai`, mon–fri `09:00–12:00` +
+`14:00–18:00` (= 01:00–04:00 and 06:00–10:00 UTC; China has no DST), sat/sun empty —
+lacking only holiday overrides, state labels, and the transition UI.
+
+New optional `Check` fields (store version 2; all defaulted when loading version 1):
+
+- `states`: `{ active: {label, color, note}, inactive: {…} }`; defaults "In range"/"Out"
+  with green/grey — v1 files look and behave exactly as today.
+- `details`: display-only rows `{name, active, inactive}` (the rate table, genericized).
+- `dayOverrides`: `[{from, to, mode: forceActive|forceInactive, label}]`; `from`/`to` are
+  inclusive dates in the check's zone; evaluated per instant, override wins over schedule
+  (matches the extension's `offPeakAllDay`).
+- `notifyOnFlip`: Bool.
+
+One zone per check (ranges and override dates share it). The extension's UTC-windows /
+Beijing-calendar split is not needed: for its windows the UTC weekday equals the Beijing
+weekday, so a single `Asia/Shanghai` check encodes the same policy.
+
+Engine additions (pure, `OverlapEngine`): `OverlapState` gains `windowStart`,
+`nextTransition: Date?`, `upcoming: [WindowSlice]` (start/end/isActive). Transition
+candidates = band edges + override day boundaries; bounded forward scan (~14 days),
+mirroring the extension's bounded walk-back. Override boundary semantics: an overnight
+spillover dies at 00:00 of a forced day (state flips at midnight). Keep
+`evaluate(check:now:)` pure per the architecture contract.
+
+UI: status row gets a state chip (label + color), countdown to `nextTransition`, progress
+through the current window, an upcoming-windows table, and expandable `details` rows
+showing current/next values; timeline bands take the state color (default stays
+green/grey — this revises the AGENTS.md timeline contract at implementation time); menubar
+icon tint from the first active check's active color, green otherwise; a one-shot timer at
+`min(nextTransition)` in addition to the mandated 60s timer + `$checks` subscription;
+per-check flip notification via `UserNotifications` with the 5-min grace window (first run
+only records state).
+
+Preset: an "DeepSeek pricing" template in the Edit tab creates the check above with
+`dayOverrides` seeded from a bundled copy of the extension's holiday list and `details`
+seeded from its popup rates; everything user-editable afterward.
+
+### Phases (each shippable) — executable specs in `context/specs/`
+
+1. Core: v2 model + `dayOverrides` + window-transition engine + DeepSeek fixture
+   proof (peak at 2026-10-23 02:00 UTC, off at 05:00 UTC, all-day off Sat 2026-10-24
+   and across 2026-10-01..07) — `specs/01-core-window-model.md`.
+2. Status UI: chips, countdown, upcoming table, details, state-colored timeline, plus
+   editor exposure of the v2 fields; app smoke — `specs/02-status-window-ui.md`.
+3. Menubar: boundary-aligned refresh + icon tint; app smoke —
+   `specs/03-menubar-state-feedback.md`.
+4. Notifications (toggle + grace window); app smoke — `specs/04-flip-notifications.md`.
+5. DeepSeek preset; README + AGENTS.md contract updates; this log —
+   `specs/05-deepseek-preset-and-docs.md`.
+
+Per `context/TEMPLATE.md`'s testing policy, the fixture proofs run through a temporary
+integration harness (deleted before yield) instead of new permanent unit tests; the
+existing 8 cases stay green throughout.
+
+Compat: v1 files load unchanged with defaults; re-save upgrades to v2. Risks: transition
+scan cost (bounded, computed on refresh/panel-open only); the overnight + override
+boundary interaction was proven by the phase-1 fixture harness; the AGENTS.md
+"timeline must be green" contract was intentionally revised in phase 2.
