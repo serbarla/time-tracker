@@ -6,6 +6,10 @@ A macOS menu-bar utility that answers one question per configured check:
 
 A **check** is a name, an IANA time zone, and per-weekday working-hour ranges in that zone's wall clock. Overlap is evaluated live against absolute instants, so DST and overnight ranges work without manual offset math.
 
+## Status
+
+V5 pricing-window release (2026-10-23): named states, transition countdown/upcoming windows, day overrides, flip notifications, and the DeepSeek pricing preset. `swift build` and the 8 XCTest cases pass. Persistence is schema v2 with v1 compatibility; the packaged bundle is ad-hoc signed.
+
 ## Requirements
 
 - macOS 26 or newer (deployment target)
@@ -25,12 +29,12 @@ The **Launch at login** toggle requires a real app bundle and will fail when run
 
 ```bash
 swift build                          # debug build
-swift test                           # 8 unit tests (core models + overlap engine)
+swift test                           # 8 XCTest cases (Codable model, JSON store, overlap engine)
 bash Scripts/package-app.sh          # release build + ad-hoc sign -> dist/TimeTracker.app
 open dist/TimeTracker.app            # run bundled app (enables launch-at-login)
 ```
 
-`dist/` is gitignored. The bundle is ad-hoc signed (`codesign --sign -`) and not notarized; it is intended for personal use.
+`dist/` is gitignored. The bundle id is `com.sergiobarba.timetracker`, ad-hoc signed (`codesign --sign -`) and not notarized; it is intended for personal use.
 
 ## Usage
 
@@ -40,22 +44,22 @@ The panel has two tabs.
 
 - One row per check: name, current remote weekday/time, a 24-hour local-time timeline, and overlap status.
 - Checks with named states show a state chip (label + color) in place of the legacy dot; v1 checks without `states` keep the dot.
-- The timeline takes the active state's color (green when the check has no `states`) while the current instant is inside an overlap period, **grey** otherwise. Bands show the day's overlap periods; the vertical marker is "now".
-- When currently overlapping, an orange warning shows the overlap's end time.
-- Each row shows a countdown to the next state flip ("Next in H:MM:SS"), a progress bar through the current window, and the next four windows with their states and durations.
-- Checks with `details` rows get a "Details" disclosure showing the current value and the next value with its flip time.
+- The timeline takes the active state's color (green when the check has no `states`) while the current instant is inside an overlap period, **grey** otherwise. Bands show the day's scheduled ranges; day overrides change the evaluated state but do not add or remove bands. The vertical marker is "now".
+- When the current instant falls inside a scheduled range, an orange warning shows that range's end time.
+- Each row shows a countdown to the next state flip ("Next in H:MM:SS"), a progress bar through the current window, and the current window plus up to three upcoming windows with state chips and durations; the current window shows time remaining.
+- Checks with `details` rows get a "Details" disclosure showing the current value and, when a flip is known, the next value with its "from" time.
 - The menu-bar title lists the names of overlapping checks, comma-separated; it is blank when none overlap.
 - The menu-bar clock icon is tinted with the first overlapping check's active color (green when none overlap or for v1 checks without `states`).
-- Refreshes every minute, at each check's next state boundary (flips render within ~2 seconds), and immediately whenever checks are added, edited, or deleted.
-- **Notifications:** flip banners are off by default. Enable "Notificar cambios de estado" in the editor to post `<check name>: <new state label>` at each flip, with the next flip time. The first observation after launch only records state, and flips older than 5 minutes are resynced silently, so changes missed during sleep are never announced late. Notifications require the bundled app; `swift run` has no bundle identifier and never posts. macOS asks for permission the first time an enabled check exists.
+- Refreshes every minute, exactly at each check's next state boundary (the menu-bar title updates ~0.25 s after the boundary; the open panel's countdown ticks every second), and immediately whenever checks are added, edited, or deleted.
+- **Notifications:** flip banners are off by default. Enable "Notificar cambios de estado" in the editor to post `<check name>: <new state label>` at each flip, with the next flip time when one is known. The first observation after launch only records state, and flips older than 5 minutes are resynced silently, so changes missed during sleep are never announced late. Notifications require the bundled app; `swift run` has no bundle identifier and never posts. macOS asks for permission the first time an enabled check exists.
 
 **Edit**
 
-- Add, edit, and delete checks inline. Auto-saves to JSON on every change.
+- Add, edit, and delete checks inline. Auto-saves to JSON on every store mutation.
 - The pencil icon opens the editor populated with that check's current data; Save overwrites it by UUID.
 - New checks default to the current user time zone.
 - **Add preset → DeepSeek pricing** creates a normal check through the store: `Asia/Shanghai`, Mon–Fri `09:00–12:00` + `14:00–18:00` as peak (red "Peak pricing"), everything else off-peak (green "Off-peak · half price"), the six rate rows, and forced off-peak overrides for Mid-Autumn (2026-09-25–27) and National Day (2026-10-01–07). It is fully editable afterward like any other check; there is no DeepSeek-specific engine code.
-- The editor exposes optional named states, display-only detail rows, day-level overrides, and the flip-notification toggle.
+- The editor exposes optional named states (label, color, optional note), display-only detail rows, day-level overrides, and the flip-notification toggle.
 - The time-zone filter auto-selects the first matching zone as you type. Clearing the filter keeps the current selection.
 
 Default global shortcut: **Control+Option+T**.
@@ -68,7 +72,7 @@ Stored at:
 ~/Library/Application Support/TimeTracker/checks.json
 ```
 
-The file is written on the first add/edit/delete. Schema:
+The file is written on every store mutation (`add`, `update`, `remove`, `move`), not at launch. Schema:
 
 ```json
 {
@@ -132,13 +136,15 @@ Rules:
 - `start`/`end` are 24-hour `"HH:mm"` wall-clock times in `timeZoneIdentifier`.
 - Ranges are half-open: `[start, end)`.
 - `end <= start` means the range rolls past midnight into the next day.
-- A range with `start == end` is invalid (it would mean "always on").
+- A range with `start == end` is degenerate: the evaluator treats it as a 24-hour range (always on), while `HourRange.isValid` reports it invalid; the editor does not currently reject it.
+- Malformed `"HH:mm"` times are ignored at evaluation time.
 - `[]` means an off day; multiple non-contiguous ranges per day are allowed.
 - Overlap evaluation also considers the previous remote day to catch overnight spillover.
-- `states` is optional. `active`/`inactive` hold `{label, color}`, with `color` one of `green`, `grey`, `red`, `orange`, `yellow`, `blue`, `purple`. Absent `states` means the v1 look: "In range"/"Out" with the legacy dot.
-- `details` is optional and display-only: each `{name, active, inactive}` row shows the value for the current state and the next state.
-- `dayOverrides` is optional. Each `{from, to, mode, label}` covers an inclusive date range in the check's zone; `mode` is `forceActive` or `forceInactive` and wins over the schedule. An overnight range is cut at 00:00 of a forced day.
+- `states` is optional. `active`/`inactive` hold `{label, color, note?}`; `note` is optional, edited and persisted, but not displayed in the Status row. `color` is one of `green`, `grey`, `red`, `orange`, `yellow`, `blue`, `purple`. Absent `states` means the v1 look: "In range"/"Out" with the legacy dot.
+- `details` is optional and display-only: each `{name, active, inactive}` row shows the current state's value and, when a flip is known, the next state's value.
+- `dayOverrides` is optional. Each `{from, to, mode, label}` covers an inclusive date range in the check's zone; `mode` is `forceActive` or `forceInactive` and wins over the schedule for state evaluation; timeline bands remain schedule-only. An overnight range is cut at 00:00 of a forced day.
 - `notifyOnFlip` is stored for every check (default `false`); see the notification behavior above.
+- Transition and upcoming-window scans are bounded to 14 days: `nextTransition` is `nil` when no flip occurs in that horizon, and `upcoming` is truncated there.
 - Version 1 files load unchanged: missing v2 fields default to no states, no details, no overrides, and notifications off. The next save writes `"version": 2`.
 
 ## Code map
@@ -151,14 +157,16 @@ Rules:
 | `Sources/TimeTrackerCore/Weekday.swift` | Monday-first weekdays and JSON keys |
 | `Sources/TimeTrackerCore/OverlapEngine.swift` | Pure `(Check, Date) -> OverlapState` evaluation, including transitions |
 | `Sources/TimeTrackerCore/CheckStore.swift` | `@MainActor` observable store, JSON load/save |
-| `Sources/TimeTrackerApp/TimeTrackerApp.swift` | `NSStatusItem` + `NSPopover`, hotkey, launch at login, menubar label and icon tint, boundary-aligned refresh, flip notifications |
+| `Sources/TimeTrackerApp/TimeTrackerApp.swift` | `NSStatusItem` + `NSPopover`, menubar label and icon tint, boundary-aligned refresh, flip notifications |
+| `Sources/TimeTrackerApp/ContentView.swift` | Panel layout, Status/Edit tabs, launch-at-login toggle, quit |
+| `Sources/TimeTrackerApp/HotKey.swift` | Carbon global hotkey registration |
 | `Sources/TimeTrackerApp/StatusTab.swift` | Status rows: chip, timeline, countdown, upcoming windows, details |
-| `Sources/TimeTrackerApp/StateChip.swift` | State chip and palette colors |
+| `Sources/TimeTrackerApp/StateChip.swift` | State chip, palette colors, v1 default states |
 | `Sources/TimeTrackerApp/OverlapTimeline.swift` | Canvas timeline bar (state color/grey) |
 | `Sources/TimeTrackerApp/EditTab.swift` | Check list, add/edit/delete entry points, presets |
 | `Sources/TimeTrackerApp/CheckPresets.swift` | Built-in check templates (DeepSeek pricing) |
 | `Sources/TimeTrackerApp/CheckEditorView.swift` | Name, time-zone filter/picker, weekday ranges, v2 fields |
-| `Tests/TimeTrackerCoreTests/` | Overlap engine and store tests |
+| `Tests/TimeTrackerCoreTests/` | Codable, store persistence, and overlap-engine tests |
 
 ## Context
 

@@ -41,7 +41,8 @@ struct StateChip: View {
             .padding(.horizontal, compact ? 6 : 8)
             .padding(.vertical, compact ? 1 : 2)
             .foregroundStyle(style.color.swatch)
-            .background(style.color.swatch.opacity(0.18), in: Capsule())
+            .background(Color.white, in: Capsule())
+            .overlay(Capsule().stroke(style.color.swatch, lineWidth: 1))
     }
 }
 

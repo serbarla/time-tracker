@@ -39,6 +39,8 @@ struct ContentView: View {
                 .padding(6)
         }
         .frame(width: 380, height: 588)
+        .background(Color.white)
+        .preferredColorScheme(.light)
     }
 
     private var launchAtLoginBinding: Binding<Bool> {

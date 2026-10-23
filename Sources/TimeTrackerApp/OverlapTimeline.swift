@@ -20,12 +20,12 @@ struct OverlapTimeline: View {
         Canvas { context, size in
             context.fill(
                 Path(CGRect(origin: .zero, size: size)),
-                with: .color(Color.secondary.opacity(isOverlapping ? 0.10 : 0.15))
+                with: .color(Color.white)
             )
 
             let bandColor: Color = isOverlapping
-                ? activeColor.opacity(0.65)
-                : Color.secondary.opacity(0.35)
+                ? activeColor
+                : Color(white: 0.75)
 
             let dayStart = localCalendar.startOfDay(for: now)
             let span: TimeInterval = 86400
@@ -53,7 +53,7 @@ struct OverlapTimeline: View {
             let marker = CGRect(x: nx - 1, y: 0, width: 2, height: size.height)
             context.fill(
                 Path(marker),
-                with: .color(isOverlapping ? activeColor : Color.secondary.opacity(0.7))
+                with: .color(isOverlapping ? activeColor : Color(white: 0.45))
             )
         }
         .clipShape(RoundedRectangle(cornerRadius: 3))

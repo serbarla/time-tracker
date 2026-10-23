@@ -48,7 +48,7 @@ struct CheckStatusRow: View {
                     StateChip(style: currentStyle)
                 } else {
                     Circle()
-                        .fill(state.isOverlapping ? Color.green : Color.secondary.opacity(0.4))
+                        .fill(state.isOverlapping ? Color.green : Color(white: 0.6))
                         .frame(width: 8, height: 8)
                 }
                 Text(check.name).fontWeight(.semibold)
@@ -87,7 +87,11 @@ struct CheckStatusRow: View {
             }
         }
         .padding(10)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(white: 0.85), lineWidth: 1)
+        )
     }
 
     /// Next 4 windows (the first contains `now`) as compact rows.

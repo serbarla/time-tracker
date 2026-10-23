@@ -59,6 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupPopover() {
         let popover = NSPopover()
         popover.behavior = .transient
+        popover.appearance = NSAppearance(named: .aqua)
         popover.contentViewController = NSHostingController(
             rootView: ContentView().environmentObject(store)
         )
@@ -92,7 +93,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let names = zip(checks, states)
             .filter { $0.1.isOverlapping }
             .map { $0.0.name }
-        statusItem?.button?.title = names.isEmpty ? "" : " " + names.joined(separator: ", ")
+        if let button = statusItem?.button {
+            button.title = names.isEmpty ? "" : names.joined(separator: ", ") + " "
+            button.imagePosition = names.isEmpty ? .imageOnly : .imageRight
+        }
 
         // Tint by state: first active check's active color (check order); green
         // when none is active (v1 checks have no `states` -> green default).
