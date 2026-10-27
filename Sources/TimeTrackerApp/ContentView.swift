@@ -31,6 +31,7 @@ struct ContentView: View {
 
             Toggle(loc.t("app.launchAtLogin"), isOn: launchAtLoginBinding)
                 .toggleStyle(.switch)
+                .tint(.green)
                 .controlSize(.small)
                 .padding(.horizontal, 12)
                 .padding(.top, 6)
