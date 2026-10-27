@@ -148,7 +148,7 @@ cat > "$WORKDIR/ax.applescript" <<'EOF'
 --   reports it at "pop over 1 of menu bar 2". Both are tried everywhere.
 -- * Segmented Picker tabs are "radio button 1/2 of radio group 1 of group 1";
 --   their labels ("Status"/"Edit") live in "description", NOT "name".
--- * "Add Zona" and "Quit TimeTracker" expose no label at all; they are matched
+-- * "Add Time Zone" and "Quit TimeTracker" expose no label at all; they are matched
 --   structurally as the first/last of the two "button"s of "group 1".
 
 on popOf()
@@ -295,8 +295,8 @@ on run argv
           end repeat
         end if
         if not rowOk then return "false"
-        -- "Add preset" is a named menu button; "Add Zona" is unnamed and is
-        -- the first of the two group-1 buttons (Add Zona, Quit).
+        -- "Add preset" is a named menu button; "Add Time Zone" is unnamed and is
+        -- the first of the two group-1 buttons (Add Time Zone, Quit).
         try
           if (name of menu button 1 of group 1 of popRef) = "Add preset" then
             if (count of buttons of group 1 of popRef) = 2 then return "true"

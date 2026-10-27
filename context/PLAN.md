@@ -257,6 +257,9 @@ Rules we keep:
   the Settings dropdown (third tab: Status | Edit | Settings) overrides it from then on.
 - Notifications and the warning line use the same catalog (`notify.*`, `status.warning`),
   still on the local clock in `HH:mm`.
+- Entry-type label copy (2026-10-27): the word "Zona" is localized as "Time Zone" (`en`) /
+  "Zona Horaria" (`es`) wherever it names the entry (`editor.zona`, `edit.addZona`); the
+  mixed flavor stays for "Filtrar Zonas" and "No zonas".
 
 Shipped with it: `Scripts/package-app.sh` now copies (and signs) the SPM resource bundle
 into `Contents/Resources/`, and `Scripts/ui-smoke.sh` pins `uiLocale=en` for its run and

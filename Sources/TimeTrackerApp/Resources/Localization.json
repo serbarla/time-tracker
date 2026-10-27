@@ -23,7 +23,7 @@
     "edit.helpEdit": "Edit check",
     "edit.helpDelete": "Delete check",
     "edit.newName": "New check",
-    "edit.addZona": "Add Zona",
+    "edit.addZona": "Add Time Zone",
     "edit.addPreset": "Add preset",
 
     "state.active": "In range",
@@ -37,7 +37,7 @@
     "weekday.sat": "Sat",
     "weekday.sun": "Sun",
 
-    "editor.zona": "Zona",
+    "editor.zona": "Time Zone",
     "editor.cancel": "Cancel",
     "editor.save": "Save",
     "editor.name": "Name",
@@ -112,7 +112,7 @@
     "edit.helpEdit": "Editar zona",
     "edit.helpDelete": "Eliminar zona",
     "edit.newName": "Nueva zona",
-    "edit.addZona": "Añadir Zona",
+    "edit.addZona": "Añadir Zona Horaria",
     "edit.addPreset": "Añadir plantilla",
 
     "state.active": "En horario",
@@ -126,7 +126,7 @@
     "weekday.sat": "Sáb",
     "weekday.sun": "Dom",
 
-    "editor.zona": "Zona",
+    "editor.zona": "Zona Horaria",
     "editor.cancel": "Cancelar",
     "editor.save": "Guardar",
     "editor.name": "Nombre",

@@ -27,7 +27,7 @@ divergence under Testing criteria, NEVER improvise outside the objectives.
 - No notification code or toggles — spec 04 owns them.
 - No DeepSeek preset — spec 05 owns it.
 - No changes to `OverlapEngine` or `CheckStore` behavior; no mutation paths besides `add`/`update`/`remove`/`move`; no persistence from views.
-- No new UI copy language — keep the existing mixed English/Spanish style ("Zona", "Filtrar Zonas", "No zonas").
+- No new UI copy language — keep the existing mixed English/Spanish style ("Filtrar Zonas", "No zonas"); the "Zona" entry-type label is localized ("Time Zone" / "Zona Horaria").
 
 ## 3. Testing criteria
 
