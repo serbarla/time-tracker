@@ -28,6 +28,21 @@ extension StateColor {
         case .purple: return .systemPurple
         }
     }
+
+    /// Filled-circle swatch for menu rows. Menu-style pickers render through
+    /// NSMenu: template images are tinted with the label color (flattening
+    /// every entry to grey) and SwiftUI shapes don't render at all, so the
+    /// circle must be drawn into a non-template NSImage.
+    var swatchImage: NSImage {
+        let side: CGFloat = 12
+        let image = NSImage(size: NSSize(width: side, height: side))
+        image.lockFocus()
+        nsColor.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 0, y: 0, width: side, height: side)).fill()
+        image.unlockFocus()
+        image.isTemplate = false
+        return image
+    }
 }
 
 /// Capsule chip showing a state's label tinted with its palette color.

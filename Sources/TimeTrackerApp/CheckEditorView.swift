@@ -269,9 +269,12 @@ struct StateStyleEditor: View {
                     .textFieldStyle(.roundedBorder)
                 Picker(loc.t("editor.color"), selection: $style.color) {
                     ForEach(StateColor.allCases, id: \.self) { color in
-                        Label(loc.t("color.\(color.rawValue)"), systemImage: "circle.fill")
-                            .labelStyle(.titleAndIcon)
-                            .tag(color)
+                        Label {
+                            Text(loc.t("color.\(color.rawValue)"))
+                        } icon: {
+                            Image(nsImage: color.swatchImage)
+                        }
+                        .tag(color)
                     }
                 }
                 .pickerStyle(.menu)
