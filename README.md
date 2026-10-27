@@ -70,6 +70,7 @@ The panel has three tabs: **Status**, **Edit**, **Settings**.
 - The pencil icon opens the editor populated with that check's current data; Save overwrites it by UUID.
 - New checks default to the current user time zone.
 - **Add preset → DeepSeek pricing** creates a normal check through the store: `Asia/Shanghai`, Mon–Fri `09:00–12:00` + `14:00–18:00` as peak (red "Peak pricing"), everything else off-peak (green "Off-peak · half price"), the six rate rows, and forced off-peak overrides for Mid-Autumn (2026-09-25–27) and National Day (2026-10-01–07). It is fully editable afterward like any other check; there is no DeepSeek-specific engine code.
+- **Add preset → Xiaomi MiMo pricing** creates a check with `Asia/Shanghai`, every day `00:00–08:00` as off-peak (green "Off-peak") and the rest as peak (red "Peak"). Six rate rows show the V2.6 overseas USD pay-as-you-go prices (Flash and Pro: input, cached, output), with the off-peak column at 80% of the peak list price. Fully editable like any other check.
 - The editor exposes optional named states (label, color, optional note), display-only detail rows, day-level overrides, and the flip-notification toggle.
 - The time-zone filter auto-selects the first matching zone as you type. Clearing the filter keeps the current selection.
 
@@ -204,7 +205,7 @@ Rules:
 | `Sources/TimeTrackerApp/StateChip.swift` | State chip, palette colors, v1 default states |
 | `Sources/TimeTrackerApp/OverlapTimeline.swift` | Canvas timeline bar (state color/grey) |
 | `Sources/TimeTrackerApp/EditTab.swift` | Check list, add/edit/delete entry points, presets |
-| `Sources/TimeTrackerApp/CheckPresets.swift` | Built-in check templates (DeepSeek pricing) |
+| `Sources/TimeTrackerApp/CheckPresets.swift` | Built-in check templates (DeepSeek pricing, Xiaomi MiMo pricing) |
 | `Sources/TimeTrackerApp/CheckEditorView.swift` | Name, time-zone filter/picker, weekday ranges, v2 fields |
 | `Tests/TimeTrackerCoreTests/` | Codable, store persistence, and overlap-engine tests |
 

@@ -12,14 +12,14 @@
     "lang.en": "English",
     "lang.es": "Español",
 
-    "status.empty": "No zonas yet — add one in the Edit tab.",
+    "status.empty": "No time zones yet — add one in the Edit tab.",
     "status.details": "Details",
     "status.nextIn": "Next in %d:%02d:%02d",
     "status.remaining": "%@ left",
     "status.warning": "Overlap now — until %@",
     "status.detailsNext": "→ %@ from %@",
 
-    "edit.empty": "No zonas.",
+    "edit.empty": "No time zones.",
     "edit.helpEdit": "Edit check",
     "edit.helpDelete": "Delete check",
     "edit.newName": "New check",
@@ -41,15 +41,15 @@
     "editor.cancel": "Cancel",
     "editor.save": "Save",
     "editor.name": "Name",
-    "editor.filter": "Filtrar Zonas",
+    "editor.filter": "Filter time zones",
     "editor.timezone": "Time zone",
-    "editor.states": "Estados personalizados",
-    "editor.stateActive": "Activo",
-    "editor.stateInactive": "Inactivo",
-    "editor.notify": "Notificar cambios de estado",
+    "editor.states": "Custom states",
+    "editor.stateActive": "Active",
+    "editor.stateInactive": "Inactive",
+    "editor.notify": "Notify on state changes",
     "editor.details": "Details",
     "editor.none": "None",
-    "editor.specialDays": "Días especiales",
+    "editor.specialDays": "Special days",
     "editor.off": "Off",
     "editor.rangeStartPlaceholder": "09:00",
     "editor.rangeEndPlaceholder": "17:00",
@@ -86,7 +86,17 @@
     "preset.deepseek.detail.proCached": "V4 Pro cached · per 1M tokens",
     "preset.deepseek.detail.proOutput": "V4 Pro output · per 1M tokens",
     "preset.deepseek.override.midAutumn": "Mid-Autumn",
-    "preset.deepseek.override.nationalDay": "National Day"
+    "preset.deepseek.override.nationalDay": "National Day",
+
+    "preset.mimo.name": "Xiaomi MiMo pricing",
+    "preset.mimo.active": "Off-peak",
+    "preset.mimo.inactive": "Peak",
+    "preset.mimo.detail.flashInput": "V2.6 Flash input · per 1M tokens",
+    "preset.mimo.detail.flashCached": "V2.6 Flash cached · per 1M tokens",
+    "preset.mimo.detail.flashOutput": "V2.6 Flash output · per 1M tokens",
+    "preset.mimo.detail.proInput": "V2.6 Pro input · per 1M tokens",
+    "preset.mimo.detail.proCached": "V2.6 Pro cached · per 1M tokens",
+    "preset.mimo.detail.proOutput": "V2.6 Pro output · per 1M tokens"
   },
   "es": {
     "app.accessibilityName": "Time Tracker",
@@ -175,6 +185,16 @@
     "preset.deepseek.detail.proCached": "V4 Pro en caché · por 1M tokens",
     "preset.deepseek.detail.proOutput": "V4 Pro salida · por 1M tokens",
     "preset.deepseek.override.midAutumn": "Medio Otoño",
-    "preset.deepseek.override.nationalDay": "Día Nacional"
+    "preset.deepseek.override.nationalDay": "Día Nacional",
+
+    "preset.mimo.name": "Precios Xiaomi MiMo",
+    "preset.mimo.active": "Fuera de punta",
+    "preset.mimo.inactive": "En punta",
+    "preset.mimo.detail.flashInput": "V2.6 Flash entrada · por 1M tokens",
+    "preset.mimo.detail.flashCached": "V2.6 Flash en caché · por 1M tokens",
+    "preset.mimo.detail.flashOutput": "V2.6 Flash salida · por 1M tokens",
+    "preset.mimo.detail.proInput": "V2.6 Pro entrada · por 1M tokens",
+    "preset.mimo.detail.proCached": "V2.6 Pro en caché · por 1M tokens",
+    "preset.mimo.detail.proOutput": "V2.6 Pro salida · por 1M tokens"
   }
 }
