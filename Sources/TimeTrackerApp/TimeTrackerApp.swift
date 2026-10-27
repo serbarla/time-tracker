@@ -50,7 +50,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(systemSymbolName: "clock", accessibilityDescription: "Time Tracker")
+        item.button?.image = NSImage(systemSymbolName: "clock",
+                                     accessibilityDescription: Localization.shared.t("app.accessibilityName"))
         item.button?.target = self
         item.button?.action = #selector(togglePopover)
         statusItem = item
@@ -61,7 +62,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.behavior = .transient
         popover.appearance = NSAppearance(named: .aqua)
         popover.contentViewController = NSHostingController(
-            rootView: ContentView().environmentObject(store)
+            rootView: ContentView()
+                .environmentObject(store)
+                .environmentObject(Localization.shared)
         )
         popover.contentSize = NSSize(width: 380, height: 588)
         self.popover = popover
@@ -114,7 +117,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard tint != lastIconTint else { return }
         lastIconTint = tint
         let config = NSImage.SymbolConfiguration(paletteColors: [tint.nsColor])
-        let image = NSImage(systemSymbolName: "clock", accessibilityDescription: "Time Tracker")?
+        let image = NSImage(systemSymbolName: "clock",
+                            accessibilityDescription: Localization.shared.t("app.accessibilityName"))?
             .withSymbolConfiguration(config)
         image?.isTemplate = false
         statusItem?.button?.image = image
@@ -171,14 +175,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// out; local clock, like the overlap warning.
     private func deliverFlipNotification(check: Check, state: OverlapState) {
         let style = state.isOverlapping ? check.displayStates.active : check.displayStates.inactive
+        let loc = Localization.shared
         let content = UNMutableNotificationContent()
         content.title = "\(check.name): \(style.label)"
         if let next = state.nextTransition {
             let f = DateFormatter()
             f.dateFormat = "HH:mm"
-            content.body = (state.isOverlapping ? "until " : "from ") + f.string(from: next)
+            content.body = loc.format(state.isOverlapping ? "notify.until" : "notify.from", f.string(from: next))
         } else {
-            content.body = "until further notice"
+            content.body = loc.t("notify.furtherNotice")
         }
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)

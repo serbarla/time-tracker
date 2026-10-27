@@ -3,6 +3,7 @@ import TimeTrackerCore
 
 struct EditTab: View {
     @EnvironmentObject private var store: CheckStore
+    @EnvironmentObject private var loc: Localization
     @State private var editing: EditorSession?
 
     struct EditorSession {
@@ -26,7 +27,7 @@ struct EditTab: View {
     private var listView: some View {
         VStack(spacing: 0) {
             if store.checks.isEmpty {
-                Text("No zonas.")
+                Text(loc.t("edit.empty"))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -51,14 +52,14 @@ struct EditTab: View {
                                 Image(systemName: "pencil")
                             }
                             .buttonStyle(.borderless)
-                            .help("Edit check")
+                            .help(loc.t("edit.helpEdit"))
                             Button(role: .destructive) {
                                 store.remove(id: check.id)
                             } label: {
                                 Image(systemName: "trash")
                             }
                             .buttonStyle(.borderless)
-                            .help("Delete check")
+                            .help(loc.t("edit.helpDelete"))
                         }
                     }
                 }
@@ -68,23 +69,23 @@ struct EditTab: View {
                 Button {
                     editing = EditorSession(
                         initial: Check(
-                            name: "New check",
+                            name: loc.t("edit.newName"),
                             timeZoneIdentifier: TimeZone.current.identifier,
                             schedule: Check.emptySchedule
                         ),
                         isNew: true
                     )
                 } label: {
-                    Label("Add Zona", systemImage: "plus")
+                    Label(loc.t("edit.addZona"), systemImage: "plus")
                 }
                 .buttonStyle(.borderedProminent)
 
                 Menu {
-                    Button("DeepSeek pricing") {
+                    Button(loc.t("preset.deepseek.name")) {
                         store.add(CheckPresets.deepSeekPricing())
                     }
                 } label: {
-                    Label("Add preset", systemImage: "wand.and.stars")
+                    Label(loc.t("edit.addPreset"), systemImage: "wand.and.stars")
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()

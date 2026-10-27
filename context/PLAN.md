@@ -1,6 +1,6 @@
 # Time Tracker (Menubar macOS) — Plan
 
-Status: **v5 — complete. Built, tested, packaged (2026-10-23).**
+Status: **v6 — complete. Built, tested, packaged (2026-10-27).** (v5 pricing-window release: 2026-10-23.)
 
 ## Decisions (Q&A log)
 
@@ -26,6 +26,7 @@ Status: **v5 — complete. Built, tested, packaged (2026-10-23).**
 | 20 | Distribution | Personal use; no signing/notarization needed. |
 | — | Ranges per weekday | **Multiple non-contiguous ranges allowed** per day. |
 | — | Shortcut behavior | Global hotkey toggles the menu panel. |
+| — | UI language | **English/Spanish from one bundled `Localization.json`**, chosen in a Settings tab; `uiLocale` in `UserDefaults`, resolved once from macOS's preferred language, then frozen. Stored check text is never translated. |
 
 ## Core concept (confirmed)
 
@@ -229,3 +230,34 @@ Compat: v1 files load unchanged with defaults; re-save upgrades to v2. Risks: tr
 scan cost (bounded, computed on refresh/panel-open only); the overnight + override
 boundary interaction was proven by the phase-1 fixture harness; the AGENTS.md
 "timeline must be green" contract was intentionally revised in phase 2.
+
+## v6 — UI localization from a JSON catalog (implemented 2026-10-27)
+
+Status: **implemented** — spec `context/specs/06-localization-json.md` is checked off.
+
+Decision: app-owned UI text is English/Spanish, sourced from one catalog,
+`Sources/TimeTrackerApp/Resources/Localization.json`, shipped with the app target
+(`resources: [.copy("Resources/Localization.json")]`). Shape is `{ "en": {key: string},
+"es": {key: string} }` with identical key sets. `Localization` (`TimeTrackerApp`) decodes
+it from `Bundle.module`, exposes `t(_:)`/`format(_:_:)`, and falls back to `en`, then to
+the key. Views take it as an `@EnvironmentObject`, so a language switch re-renders the
+open panel immediately.
+
+Rules we keep:
+- **No** Apple String Catalogs / `.strings` / `NSLocalizedString`; the JSON is the single
+  source. **No** `TimeTrackerCore` changes: `Weekday.shortName` stays for non-UI use, and
+  weekday chrome reads `weekday.mon`..`weekday.sun` from JSON instead of `DateFormatter`
+  locale data (the `EEE` format segments are gone; `HH:mm` output is unchanged).
+- **No** localization of anything stored in `checks.json`. Preset/state/detail/override
+  text is localized *at creation time* through `store.add`, and v1 default state labels
+  ("In range"/"Out") are resolved from JSON *at display time*; neither is re-translated
+  retroactively.
+- Language choice: `UserDefaults` key `uiLocale`. First launch resolves macOS's preferred
+  language once (`es`-prefixed first choice → `es`, everything else → `en`) and freezes it;
+  the Settings dropdown (third tab: Status | Edit | Settings) overrides it from then on.
+- Notifications and the warning line use the same catalog (`notify.*`, `status.warning`),
+  still on the local clock in `HH:mm`.
+
+Shipped with it: `Scripts/package-app.sh` now copies (and signs) the SPM resource bundle
+into `Contents/Resources/`, and `Scripts/ui-smoke.sh` pins `uiLocale=en` for its run and
+restores the previous value, because its AX assertions read English labels.

@@ -10,6 +10,8 @@ A **check** is a name, an IANA time zone, and per-weekday working-hour ranges in
 
 V5 pricing-window release (2026-10-23): named states, transition countdown/upcoming windows, day overrides, flip notifications, and the DeepSeek pricing preset. `swift build` and the 8 XCTest cases pass. Persistence is schema v2 with v1 compatibility; the packaged bundle is ad-hoc signed.
 
+Localization (2026-10-27): app-owned UI text ships in English and Spanish from a bundled JSON catalog, selected in the Settings tab. No `checks.json` schema change.
+
 ## Requirements
 
 - macOS 26 or newer (deployment target)
@@ -47,7 +49,7 @@ The UI smoke launches the bundled app against a temporary fixture store and driv
 
 ## Usage
 
-The panel has two tabs.
+The panel has three tabs: **Status**, **Edit**, **Settings**.
 
 **Status**
 
@@ -71,7 +73,34 @@ The panel has two tabs.
 - The editor exposes optional named states (label, color, optional note), display-only detail rows, day-level overrides, and the flip-notification toggle.
 - The time-zone filter auto-selects the first matching zone as you type. Clearing the filter keeps the current selection.
 
+**Settings**
+
+- One **Language** dropdown: `English` / `Español`. Switching re-renders every visible surface immediately; the choice persists in `UserDefaults` (`uiLocale`) and survives relaunch, overriding later macOS language changes.
+- Only app-owned chrome is localized. Text stored in `checks.json` — check names, state labels/notes, detail names and values, typed override labels — is written in the language active at creation/edit time and is never translated afterwards (a preset created in English stays English).
+
 Default global shortcut: **Control+Option+T**.
+
+## Localization
+
+App-owned UI text lives in one catalog, bundled with the app target:
+
+```
+Sources/TimeTrackerApp/Resources/Localization.json
+```
+
+Shape — the same key set in both languages:
+
+```json
+{
+  "en": { "tab.status": "Status", "status.nextIn": "Next in %d:%02d:%02d" },
+  "es": { "tab.status": "Estado", "status.nextIn": "Próximo en %d:%02d:%02d" }
+}
+```
+
+- `Sources/TimeTrackerApp/Localization.swift` decodes it from `Bundle.module` and exposes `t(_:)` (plus `format(_:_:)` for `%@`/`%d` keys); a missing key falls back to `en`, then to the key itself.
+- Weekday names (`Mon`..`Sun` / `Lun`..`Dom`) come from the `weekday.mon`..`weekday.sun` keys; time output stays 24-hour `HH:mm`, and no dates, numbers, or plurals are localized.
+- Default language: on first launch the app resolves macOS's preferred language once — an `es`-prefixed first choice writes `es`, everything else writes `en` — then freezes it in `uiLocale`. Later system-language changes are ignored until the dropdown is used.
+- `checks.json` is untouched by this: same schema, same bytes before and after a language switch.
 
 ## Data
 
@@ -167,7 +196,9 @@ Rules:
 | `Sources/TimeTrackerCore/OverlapEngine.swift` | Pure `(Check, Date) -> OverlapState` evaluation, including transitions |
 | `Sources/TimeTrackerCore/CheckStore.swift` | `@MainActor` observable store, JSON load/save |
 | `Sources/TimeTrackerApp/TimeTrackerApp.swift` | `NSStatusItem` + `NSPopover`, menubar label and icon tint, boundary-aligned refresh, flip notifications |
-| `Sources/TimeTrackerApp/ContentView.swift` | Panel layout, Status/Edit tabs, launch-at-login toggle, quit |
+| `Sources/TimeTrackerApp/ContentView.swift` | Panel layout, Status/Edit/Settings tabs, language picker, launch-at-login toggle, quit |
+| `Sources/TimeTrackerApp/Localization.swift` | `Localization.json` loader, `t`/`format`, `uiLocale` default and switch |
+| `Sources/TimeTrackerApp/Resources/Localization.json` | The `en`/`es` UI copy catalog (identical key sets) |
 | `Sources/TimeTrackerApp/HotKey.swift` | Carbon global hotkey registration |
 | `Sources/TimeTrackerApp/StatusTab.swift` | Status rows: chip, timeline, countdown, upcoming windows, details |
 | `Sources/TimeTrackerApp/StateChip.swift` | State chip, palette colors, v1 default states |

@@ -3,13 +3,14 @@ import TimeTrackerCore
 
 struct StatusTab: View {
     @EnvironmentObject private var store: CheckStore
+    @EnvironmentObject private var loc: Localization
 
     var body: some View {
         // 1s ticks drive the H:MM:SS countdown while the panel is open.
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let now = context.date
             if store.checks.isEmpty {
-                Text("No zonas yet — add one in the Edit tab.")
+                Text(loc.t("status.empty"))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -26,19 +27,33 @@ struct StatusTab: View {
     }
 }
 
+@MainActor
 struct CheckStatusRow: View {
     let check: Check
     let now: Date
+
+    @EnvironmentObject private var loc: Localization
 
     private var state: OverlapState { OverlapEngine.evaluate(check: check, now: now) }
     private var styles: CheckStates { check.displayStates }
     private var currentStyle: StateStyle { state.isOverlapping ? styles.active : styles.inactive }
 
-    private var remoteFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.dateFormat = "EEE HH:mm"
-        f.timeZone = check.timeZone
-        return f
+    /// Remote weekday from the JSON catalog plus `HH:mm` in the check's zone.
+    private func remoteLabel(_ date: Date) -> String {
+        weekdayPrefix(date) + timeOnly(date)
+    }
+
+    /// `weekday.<key>` + a space, empty when the date has no catalog weekday.
+    private func weekdayPrefix(_ date: Date) -> String {
+        guard let weekday = Weekday(calendarWeekday: checkCalendar.component(.weekday, from: date))
+        else { return "" }
+        return loc.weekday(weekday) + " "
+    }
+
+    private var checkCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = check.timeZone
+        return calendar
     }
 
     var body: some View {
@@ -53,7 +68,7 @@ struct CheckStatusRow: View {
                 }
                 Text(check.name).fontWeight(.semibold)
                 Spacer()
-                Text(remoteFormatter.string(from: now))
+                Text(remoteLabel(now))
                     .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -125,7 +140,9 @@ struct CheckStatusRow: View {
                         Text(state.isOverlapping ? row.active : row.inactive)
                             .foregroundStyle(.secondary)
                         if let transition = state.nextTransition {
-                            Text("→ \(state.isOverlapping ? row.inactive : row.active) from \(timeOnly(transition))")
+                            Text(loc.format("status.detailsNext",
+                                            state.isOverlapping ? row.inactive : row.active,
+                                            timeOnly(transition)))
                                 .foregroundStyle(.tertiary)
                         }
                     }
@@ -133,7 +150,7 @@ struct CheckStatusRow: View {
                 }
             }
         } label: {
-            Text("Details")
+            Text(loc.t("status.details"))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
         }
@@ -142,22 +159,20 @@ struct CheckStatusRow: View {
 
     private func countdownText(to transition: Date) -> String {
         let total = max(0, Int(transition.timeIntervalSince(now)))
-        return String(format: "Next in %d:%02d:%02d", total / 3600, (total % 3600) / 60, total % 60)
+        return loc.format("status.nextIn", total / 3600, (total % 3600) / 60, total % 60)
     }
 
     /// "HH:mm – HH:mm" in the check's zone; adds the weekday when the slice crosses days.
     private func sliceLabel(_ slice: WindowSlice) -> String {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = check.timeZone
-        let crossesDays = !calendar.isDate(slice.start, inSameDayAs: slice.end)
-        let fmt = DateFormatter()
-        fmt.timeZone = check.timeZone
-        fmt.dateFormat = crossesDays ? "EEE HH:mm" : "HH:mm"
-        return "\(fmt.string(from: slice.start)) – \(fmt.string(from: slice.end))"
+        let crossesDays = !checkCalendar.isDate(slice.start, inSameDayAs: slice.end)
+        func label(_ date: Date) -> String {
+            (crossesDays ? weekdayPrefix(date) : "") + timeOnly(date)
+        }
+        return "\(label(slice.start)) – \(label(slice.end))"
     }
 
     private func remainingText(_ slice: WindowSlice) -> String {
-        "\(durationText(max(0, slice.end.timeIntervalSince(now)))) left"
+        loc.format("status.remaining", durationText(max(0, slice.end.timeIntervalSince(now))))
     }
 
     /// Compact "1h 5m" / "45m" duration.
@@ -174,9 +189,10 @@ struct CheckStatusRow: View {
         return f.string(from: date)
     }
 
+    /// Local clock, unlike the check-zone times elsewhere in the row.
     private func warningText(until end: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "HH:mm"
-        return "Overlap now — until \(f.string(from: end))"
+        return loc.format("status.warning", f.string(from: end))
     }
 }

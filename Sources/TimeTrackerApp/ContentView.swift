@@ -5,15 +5,17 @@ import TimeTrackerCore
 
 struct ContentView: View {
     @EnvironmentObject private var store: CheckStore
+    @EnvironmentObject private var loc: Localization
     @State private var tab: Tab = .status
 
-    enum Tab { case status, edit }
+    enum Tab { case status, edit, settings }
 
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $tab) {
-                Text("Status").tag(Tab.status)
-                Text("Edit").tag(Tab.edit)
+                Text(loc.t("tab.status")).tag(Tab.status)
+                Text(loc.t("tab.edit")).tag(Tab.edit)
+                Text(loc.t("tab.settings")).tag(Tab.settings)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -22,17 +24,18 @@ struct ContentView: View {
             switch tab {
             case .status: StatusTab()
             case .edit: EditTab()
+            case .settings: SettingsTab()
             }
 
             Divider()
 
-            Toggle("Launch at login", isOn: launchAtLoginBinding)
+            Toggle(loc.t("app.launchAtLogin"), isOn: launchAtLoginBinding)
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .padding(.horizontal, 12)
                 .padding(.top, 6)
 
-            Button("Quit TimeTracker") { NSApp.terminate(nil) }
+            Button(loc.t("app.quit")) { NSApp.terminate(nil) }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
@@ -54,6 +57,28 @@ struct ContentView: View {
                     print("Launch at login toggle failed: \(error)")
                 }
             }
+        )
+    }
+}
+
+/// Third tab: the single language dropdown, persisted in `uiLocale`.
+@MainActor
+struct SettingsTab: View {
+    @EnvironmentObject private var loc: Localization
+
+    var body: some View {
+        Picker(loc.t("settings.language"), selection: localeBinding) {
+            Text(loc.t("lang.en")).tag("en")
+            Text(loc.t("lang.es")).tag("es")
+        }
+        .pickerStyle(.menu)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var localeBinding: Binding<String> {
+        Binding(
+            get: { UserDefaults.standard.string(forKey: Localization.localeKey) ?? loc.code },
+            set: { loc.setLocale($0) }
         )
     }
 }

@@ -1,11 +1,13 @@
 import SwiftUI
 import TimeTrackerCore
 
+@MainActor
 struct CheckEditorView: View {
     private let initialID: UUID
     let onSave: (Check) -> Void
     let onCancel: () -> Void
 
+    @EnvironmentObject private var loc: Localization
     @State private var name: String
     @State private var timeZoneID: String
     @State private var schedule: [String: [HourRange]]
@@ -30,9 +32,9 @@ struct CheckEditorView: View {
         _schedule = State(initialValue: normalized)
         _statesEnabled = State(initialValue: initial.states != nil)
         _activeStyle = State(initialValue: initial.states?.active
-            ?? StateStyle(label: "In range", color: .green))
+            ?? StateStyle(label: Localization.shared.t("state.active"), color: .green))
         _inactiveStyle = State(initialValue: initial.states?.inactive
-            ?? StateStyle(label: "Out", color: .grey))
+            ?? StateStyle(label: Localization.shared.t("state.inactive"), color: .grey))
         _details = State(initialValue: initial.details)
         _dayOverrides = State(initialValue: initial.dayOverrides)
         _notifyOnFlip = State(initialValue: initial.notifyOnFlip)
@@ -53,10 +55,10 @@ struct CheckEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Zona").font(.headline)
+                Text(loc.t("editor.zona")).font(.headline)
                 Spacer()
-                Button("Cancel") { onCancel() }
-                Button("Save") {
+                Button(loc.t("editor.cancel")) { onCancel() }
+                Button(loc.t("editor.save")) {
                     onSave(Check(
                         id: initialID,
                         name: name,
@@ -74,13 +76,13 @@ struct CheckEditorView: View {
                 .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || !allZoneIDs.contains(timeZoneID))
             }
 
-            TextField("Name", text: $name)
+            TextField(loc.t("editor.name"), text: $name)
                 .textFieldStyle(.roundedBorder)
 
-            TextField("Filtrar Zonas", text: $filter)
+            TextField(loc.t("editor.filter"), text: $filter)
                 .textFieldStyle(.roundedBorder)
 
-            Picker("Time zone", selection: $timeZoneID) {
+            Picker(loc.t("editor.timezone"), selection: $timeZoneID) {
                 ForEach(filteredZoneIDs, id: \.self) { id in
                     Text(id).tag(id)
                 }
@@ -98,20 +100,20 @@ struct CheckEditorView: View {
 
                     Divider()
 
-                    Toggle("Estados personalizados", isOn: $statesEnabled)
+                    Toggle(loc.t("editor.states"), isOn: $statesEnabled)
                         .font(.subheadline.weight(.semibold))
                     if statesEnabled {
-                        StateStyleEditor(title: "Activo", style: $activeStyle)
-                        StateStyleEditor(title: "Inactivo", style: $inactiveStyle)
+                        StateStyleEditor(title: loc.t("editor.stateActive"), style: $activeStyle)
+                        StateStyleEditor(title: loc.t("editor.stateInactive"), style: $inactiveStyle)
                     }
 
-                    Toggle("Notificar cambios de estado", isOn: $notifyOnFlip)
+                    Toggle(loc.t("editor.notify"), isOn: $notifyOnFlip)
                         .font(.subheadline.weight(.semibold))
 
                     Divider()
 
                     HStack {
-                        Text("Detalles")
+                        Text(loc.t("editor.details"))
                             .font(.subheadline.weight(.semibold))
                         Spacer()
                         Button {
@@ -122,7 +124,7 @@ struct CheckEditorView: View {
                         .buttonStyle(.borderless)
                     }
                     if details.isEmpty {
-                        Text("None")
+                        Text(loc.t("editor.none"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
@@ -136,7 +138,7 @@ struct CheckEditorView: View {
                     Divider()
 
                     HStack {
-                        Text("Días especiales")
+                        Text(loc.t("editor.specialDays"))
                             .font(.subheadline.weight(.semibold))
                         Spacer()
                         Button {
@@ -150,7 +152,7 @@ struct CheckEditorView: View {
                         .buttonStyle(.borderless)
                     }
                     if dayOverrides.isEmpty {
-                        Text("None")
+                        Text(loc.t("editor.none"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
@@ -202,11 +204,12 @@ struct CheckEditorView: View {
 struct WeekdayRow: View {
     let weekday: Weekday
     @Binding var ranges: [HourRange]
+    @EnvironmentObject private var loc: Localization
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(weekday.shortName)
+                Text(loc.weekday(weekday))
                     .font(.subheadline.weight(.semibold))
                     .frame(width: 40, alignment: .leading)
                 Spacer()
@@ -218,7 +221,7 @@ struct WeekdayRow: View {
                 .buttonStyle(.borderless)
             }
             if ranges.isEmpty {
-                Text("Off")
+                Text(loc.t("editor.off"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -235,12 +238,13 @@ struct WeekdayRow: View {
 struct RangeRow: View {
     @Binding var range: HourRange
     let onDelete: () -> Void
+    @EnvironmentObject private var loc: Localization
 
     var body: some View {
         HStack {
-            TextField("09:00", text: $range.start)
+            TextField(loc.t("editor.rangeStartPlaceholder"), text: $range.start)
             Text("–")
-            TextField("17:00", text: $range.end)
+            TextField(loc.t("editor.rangeEndPlaceholder"), text: $range.end)
             Button(role: .destructive) { onDelete() } label: {
                 Image(systemName: "minus.circle")
             }
@@ -254,17 +258,18 @@ struct RangeRow: View {
 struct StateStyleEditor: View {
     let title: String
     @Binding var style: StateStyle
+    @EnvironmentObject private var loc: Localization
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
             HStack {
-                TextField("Label", text: $style.label)
+                TextField(loc.t("editor.label"), text: $style.label)
                     .textFieldStyle(.roundedBorder)
-                Picker("Color", selection: $style.color) {
+                Picker(loc.t("editor.color"), selection: $style.color) {
                     ForEach(StateColor.allCases, id: \.self) { color in
-                        Label(color.rawValue.capitalized, systemImage: "circle.fill")
+                        Label(loc.t("color.\(color.rawValue)"), systemImage: "circle.fill")
                             .labelStyle(.titleAndIcon)
                             .tag(color)
                     }
@@ -272,7 +277,7 @@ struct StateStyleEditor: View {
                 .pickerStyle(.menu)
                 .frame(width: 100)
             }
-            TextField("Note", text: Binding(
+            TextField(loc.t("editor.note"), text: Binding(
                 get: { style.note ?? "" },
                 set: { style.note = $0.isEmpty ? nil : $0 }
             ))
@@ -285,12 +290,13 @@ struct StateStyleEditor: View {
 struct DetailRowEditor: View {
     @Binding var row: DetailRow
     let onDelete: () -> Void
+    @EnvironmentObject private var loc: Localization
 
     var body: some View {
         HStack {
-            TextField("Name", text: $row.name)
-            TextField("Active", text: $row.active)
-            TextField("Inactive", text: $row.inactive)
+            TextField(loc.t("editor.name"), text: $row.name)
+            TextField(loc.t("editor.activeValue"), text: $row.active)
+            TextField(loc.t("editor.inactiveValue"), text: $row.inactive)
             Button(role: .destructive) { onDelete() } label: {
                 Image(systemName: "minus.circle")
             }
@@ -305,6 +311,7 @@ struct OverrideRowEditor: View {
     @Binding var override: DayOverride
     let calendar: Calendar
     let onDelete: () -> Void
+    @EnvironmentObject private var loc: Localization
 
     static func dayFormatter(timeZone: TimeZone) -> DateFormatter {
         let f = DateFormatter()
@@ -326,8 +333,8 @@ struct OverrideRowEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                DatePicker("From", selection: dayBinding(\.from), displayedComponents: .date)
-                DatePicker("To", selection: dayBinding(\.to), displayedComponents: .date)
+                DatePicker(loc.t("editor.from"), selection: dayBinding(\.from), displayedComponents: .date)
+                DatePicker(loc.t("editor.to"), selection: dayBinding(\.to), displayedComponents: .date)
                 Button(role: .destructive) { onDelete() } label: {
                     Image(systemName: "minus.circle")
                 }
@@ -335,12 +342,12 @@ struct OverrideRowEditor: View {
             }
             .datePickerStyle(.compact)
             HStack {
-                Picker("Mode", selection: $override.mode) {
-                    Text("Force inactive").tag(DayOverride.Mode.forceInactive)
-                    Text("Force active").tag(DayOverride.Mode.forceActive)
+                Picker(loc.t("editor.mode"), selection: $override.mode) {
+                    Text(loc.t("editor.forceInactive")).tag(DayOverride.Mode.forceInactive)
+                    Text(loc.t("editor.forceActive")).tag(DayOverride.Mode.forceActive)
                 }
                 .pickerStyle(.menu)
-                TextField("Label", text: $override.label)
+                TextField(loc.t("editor.label"), text: $override.label)
                     .textFieldStyle(.roundedBorder)
             }
         }

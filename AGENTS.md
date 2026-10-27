@@ -19,6 +19,7 @@ Whenever you are asked to plan something, please do not assume, ask the user fir
 ## Repository shape
 
 - Swift Package Manager only. There is no `.xcodeproj`.
+- `Sources/TimeTrackerApp/Resources/Localization.json` — the `en`/`es` UI copy catalog (identical key sets in both), bundled via `resources: [.copy(...)]` on the `TimeTrackerApp` target.
 - `Sources/TimeTrackerCore` — pure, testable logic: models, overlap engine, JSON store. Keep it UI-free and time-zone-correct.
 - `Sources/TimeTrackerApp` — AppKit/SwiftUI menu-bar app shell and views.
 - `Tests/TimeTrackerCoreTests` — 8 XCTest cases covering overlap semantics, Codable round-trip, and store persistence.
@@ -61,7 +62,8 @@ The panel is transient: it closes when focus leaves. In AppleScript UI scripting
 - Views read state from `CheckStore`; do not persist from views directly.
 - `CheckPresets` is data only: a preset builds a normal `Check` and is added through `store.add`; the engine never special-cases a preset, and presets stay fully user-editable.
 - Flip notifications use the 5-minute `windowStart` grace; the first observation after launch records state without notifying, and only checks with `notifyOnFlip` announce.
-- UI copy is mixed English/Spanish ("Zona", "Filtrar Zonas", "No zonas"). Preserve existing language/style unless asked.
+- **UI copy contract:** all app-owned UI text comes from `Localization.json` — add every new string to both `en` and `es` and render it through `Localization.shared`/`@EnvironmentObject` (`t` or `format`), never as an inline literal. User-entered check/state/detail/override text is never localized, and already-stored text is never re-translated when the language changes. The catalog keeps the mixed English/Spanish flavor ("Zona", "Filtrar Zonas", "No zonas") in `en`; preserve it.
+- Language selection lives in `UserDefaults` under `uiLocale` (`en`/`es`): written once from macOS's preferred language on first launch, then frozen until the Settings dropdown changes it. The UI smoke pins it to `en` for its run and restores the previous value.
 
 ## Editing behavior that is easy to break
 

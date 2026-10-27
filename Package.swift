@@ -12,7 +12,8 @@ let package = Package(
         .target(name: "TimeTrackerCore"),
         .executableTarget(
             name: "TimeTrackerApp",
-            dependencies: ["TimeTrackerCore"]
+            dependencies: ["TimeTrackerCore"],
+            resources: [.copy("Resources/Localization.json")]
         ),
         .testTarget(name: "TimeTrackerCoreTests", dependencies: ["TimeTrackerCore"]),
     ]

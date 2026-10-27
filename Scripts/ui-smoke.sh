@@ -39,15 +39,31 @@ pkill -x TimeTracker 2>/dev/null || true
 
 WORKDIR=""
 APP_PID=""
+# The smoke asserts English AX labels ("Status"/"Edit"/"Add preset"), so the
+# run pins uiLocale=en and restores whatever the user had chosen.
+UI_LOCALE_DOMAIN="com.sergiobarba.timetracker"
+UI_LOCALE_PINNED=0
+UI_LOCALE_SAVED=""
 cleanup() {
   if [[ -n "$APP_PID" ]] && kill -0 "$APP_PID" 2>/dev/null; then
     kill "$APP_PID" 2>/dev/null || true
     wait "$APP_PID" 2>/dev/null || true
   fi
+  if [[ "$UI_LOCALE_PINNED" == "1" ]]; then
+    if [[ -n "$UI_LOCALE_SAVED" ]]; then
+      defaults write "$UI_LOCALE_DOMAIN" uiLocale -string "$UI_LOCALE_SAVED"
+    else
+      defaults delete "$UI_LOCALE_DOMAIN" uiLocale 2>/dev/null || true
+    fi
+  fi
   if [[ -n "$WORKDIR" ]]; then rm -rf "$WORKDIR"; fi
   return 0
 }
 trap cleanup EXIT
+
+UI_LOCALE_SAVED="$(defaults read "$UI_LOCALE_DOMAIN" uiLocale 2>/dev/null || true)"
+defaults write "$UI_LOCALE_DOMAIN" uiLocale -string "en"
+UI_LOCALE_PINNED=1
 
 dump_tree() {
   echo "--- AX tree (popover; one element per line) ---"

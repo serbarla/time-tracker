@@ -47,11 +47,13 @@ struct StateChip: View {
 }
 
 extension Check {
-    /// States with v1 defaults applied: "In range" green / "Out" grey.
+    /// States with v1 defaults applied: catalog "In range" green / "Out" grey,
+    /// resolved at display time so a language switch re-renders them.
+    @MainActor
     var displayStates: CheckStates {
         states ?? CheckStates(
-            active: StateStyle(label: "In range", color: .green),
-            inactive: StateStyle(label: "Out", color: .grey)
+            active: StateStyle(label: Localization.shared.t("state.active"), color: .green),
+            inactive: StateStyle(label: Localization.shared.t("state.inactive"), color: .grey)
         )
     }
 }
