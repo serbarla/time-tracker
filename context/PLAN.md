@@ -258,8 +258,12 @@ Rules we keep:
 - Notifications and the warning line use the same catalog (`notify.*`, `status.warning`),
   still on the local clock in `HH:mm`.
 - Entry-type label copy (2026-10-27): the word "Zona" is localized as "Time Zone" (`en`) /
-  "Zona Horaria" (`es`) wherever it names the entry (`editor.zona`, `edit.addZona`); the
-  mixed flavor stays for "Filtrar Zonas" and "No zonas".
+  "Zona Horaria" (`es`) wherever it names the entry (`editor.zona`, `edit.addZona`).
+  Follow-up (same day, user request): the residual mixed flavor in `en` was translated —
+  "Filtrar Zonas" → "Filter time zones", "No zonas" → "No time zones.", and the Spanish
+  `editor.states` / `editor.stateActive` / `editor.stateInactive` / `editor.notify` /
+  `editor.specialDays` values became English. `es` is unchanged; the contract is now
+  "no Spanish in the `en` block".
 
 Shipped with it: `Scripts/package-app.sh` now copies (and signs) the SPM resource bundle
 into `Contents/Resources/`, and `Scripts/ui-smoke.sh` pins `uiLocale=en` for its run and
