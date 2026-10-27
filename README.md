@@ -36,6 +36,15 @@ open dist/TimeTracker.app            # run bundled app (enables launch-at-login)
 
 `dist/` is gitignored. The bundle id is `com.sergiobarba.timetracker`, ad-hoc signed (`codesign --sign -`) and not notarized; it is intended for personal use.
 
+## Testing
+
+```bash
+bash Scripts/test.sh          # full pipeline: swift build + swift test -> package -> UI smoke
+bash Scripts/ui-smoke.sh      # UI smoke alone (auto-packages when dist/TimeTracker.app is missing)
+```
+
+The UI smoke launches the bundled app against a temporary fixture store and drives the real UI via AppleScript UI scripting: launch → menubar title → panel tabs → editor row → quit, then checks that neither the fixture nor the real store was mutated. It never touches real data: `TIMETRACKER_CHECKS_FILE` redirects the store to the fixture for the run; without that variable the production path is used unchanged. UI scripting requires enabling your terminal under System Settings → Privacy & Security → Accessibility.
+
 ## Usage
 
 The panel has two tabs.

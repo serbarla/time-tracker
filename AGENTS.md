@@ -30,6 +30,7 @@ Whenever you are asked to plan something, please do not assume, ask the user fir
 ```bash
 swift build                       # debug build (must pass before yielding)
 swift test                        # 8 tests (must pass)
+bash Scripts/test.sh              # full pipeline: build+test -> package -> UI smoke
 swift run TimeTracker             # run the menu-bar app from source
 bash Scripts/package-app.sh       # release + ad-hoc sign -> dist/TimeTracker.app
 open dist/TimeTracker.app         # bundled run; required for launch-at-login
@@ -39,7 +40,7 @@ open dist/TimeTracker.app         # bundled run; required for launch-at-login
 
 ## UI smoke testing
 
-There are no UI tests. After UI changes, run the actual app and exercise the changed surface:
+`bash Scripts/ui-smoke.sh` automates the core smoke against a fixture store — launch → menubar title → panel tabs → editor row → quit → data guards — and `bash Scripts/test.sh` runs it as the final pipeline stage. Verifying a *changed* surface beyond those assertions stays manual: after UI changes, run the actual app and exercise the changed surface:
 
 1. Kill stray instances first: `pkill -x TimeTracker`. Multiple instances each register the Carbon hotkey and create duplicate status items.
 2. `swift run TimeTracker`.
@@ -48,7 +49,7 @@ There are no UI tests. After UI changes, run the actual app and exercise the cha
 5. For notifications: enable "Notificar cambios de estado" on a check whose next boundary is within 2 minutes, run the bundled `dist/TimeTracker.app`, and confirm exactly one banner appears at the flip. The unbundled `swift run` binary cannot post notifications; the first evaluation after launch only records state, so a flip missed by more than 5 minutes stays silent.
 6. Quit the app when done.
 
-The panel is transient: it closes when focus leaves. In AppleScript UI scripting, the popover lives at `pop over 1 of menu bar 2` (not under `menu bar item 1`).
+The panel is transient: it closes when focus leaves. In AppleScript UI scripting, the popover lives at `pop over 1 of menu bar item 1 of menu bar 2` on macOS 27 (`pop over 1 of menu bar 2` on earlier macOS; `Scripts/ui-smoke.sh` tries both).
 
 ## Architecture contracts
 
@@ -73,6 +74,7 @@ The panel is transient: it closes when focus leaves. In AppleScript UI scripting
 ## Persistence
 
 - Path: `~/Library/Application Support/TimeTracker/checks.json`.
+- Tests may set `TIMETRACKER_CHECKS_FILE` to redirect the store to another path (used by `Scripts/ui-smoke.sh`); the default path is unchanged when the variable is unset.
 - Top level: `{ "version": 2, "checks": [...] }`.
 - Schedule keys: `"mon"..."sun"`; missing/empty array = off.
 - v2 optional fields on `Check`: `states` (`active`/`inactive` `StateStyle {label, color, note}`), `details` (`{name, active, inactive}` rows), `dayOverrides` (`{from, to, mode, label}` with inclusive `yyyy-MM-dd` check-zone dates and `forceActive`/`forceInactive`), `notifyOnFlip` (always written, default `false`).

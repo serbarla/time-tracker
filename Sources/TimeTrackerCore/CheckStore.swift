@@ -19,6 +19,10 @@ public final class CheckStore: ObservableObject {
     }
 
     public static func defaultFileURL() -> URL {
+        if let override = ProcessInfo.processInfo.environment["TIMETRACKER_CHECKS_FILE"],
+           !override.isEmpty {
+            return URL(fileURLWithPath: override)
+        }
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("TimeTracker", isDirectory: true)
         return dir.appendingPathComponent("checks.json")
