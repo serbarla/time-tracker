@@ -6,6 +6,32 @@ A macOS menu-bar utility that answers one question per configured check:
 
 A **check** is a name, an IANA time zone, and per-weekday working-hour ranges in that zone's wall clock. Overlap is evaluated live against absolute instants, so DST and overnight ranges work without manual offset math.
 
+## Install
+
+1. Download `TimeTracker-<version>.dmg` from the [Releases page](https://github.com/serbarla/time-tracker/releases).
+2. Open the disk image and drag `TimeTracker.app` into the Applications folder.
+3. Eject the disk image, then open TimeTracker from Applications.
+
+Requirements: macOS 26 or newer.
+
+### First launch (unsigned build)
+
+This build is not notarized, so macOS blocks the first launch:
+
+- Open TimeTracker once (double-click). macOS shows a "Not Opened" dialog ("Apple could not verify…") — click "Done", NOT "Move to Trash".
+- Open System Settings -> Privacy & Security, scroll down to the Security section, and click "Open Anyway" next to the message about TimeTracker.
+- In the "Open TimeTracker.app?" dialog that follows, click "Open Anyway" again. The app starts and its clock appears in the menu bar.
+
+Terminal alternative:
+
+```bash
+xattr -d com.apple.quarantine /Applications/TimeTracker.app
+```
+
+## Uninstall
+
+In the app: Settings -> turn off **Launch at login**, then quit. Then delete `/Applications/TimeTracker.app` and `~/Library/Application Support/TimeTracker`.
+
 ## Status
 
 V5 pricing-window release (2026-10-23): named states, transition countdown/upcoming windows, day overrides, flip notifications, and the DeepSeek pricing preset. `swift build` and the 8 XCTest cases pass. Persistence is schema v2 with v1 compatibility; the packaged bundle is ad-hoc signed.
@@ -32,11 +58,11 @@ The **Launch at login** toggle requires a real app bundle and will fail when run
 ```bash
 swift build                          # debug build
 swift test                           # 8 XCTest cases (Codable model, JSON store, overlap engine)
-bash Scripts/package-app.sh          # release build + ad-hoc sign -> dist/TimeTracker.app
+bash Scripts/package-app.sh          # release build + ad-hoc sign -> dist/TimeTracker.app + DMG
 open dist/TimeTracker.app            # run bundled app (enables launch-at-login)
 ```
 
-`dist/` is gitignored. The bundle id is `com.sergiobarba.timetracker`, ad-hoc signed (`codesign --sign -`) and not notarized; it is intended for personal use.
+`dist/` is gitignored. The bundle id is `com.sergiobarba.timetracker`; the bundle is ad-hoc signed (`codesign --sign -`) and **not notarized** (no Developer ID). `bash Scripts/package-app.sh` also emits `dist/TimeTracker-<version>.dmg` for direct download; the version comes from the newest `vX.Y.Z` git tag and `CFBundleVersion` from the commit count.
 
 ## Testing
 

@@ -23,7 +23,7 @@ Status: **v6 — complete. Built, tested, packaged (2026-10-27).** (v5 pricing-w
 | 17 | Deployment target | macOS 26+. |
 | 18 | Zone source | Apple `TimeZone` (IANA, DST-aware) — accepted. |
 | 19 | v1 scope | Status + launch-at-login + global shortcut. |
-| 20 | Distribution | Personal use; no signing/notarization needed. |
+| 20 | Distribution | Public via GitHub Releases (repo public); unsigned/ad-hoc only — no paid Apple account, so no Developer ID/notarization; users unblock via System Settings or `xattr`; manual updates. Decided 2026-10-28. |
 | — | Ranges per weekday | **Multiple non-contiguous ranges allowed** per day. |
 | — | Shortcut behavior | Global hotkey toggles the menu panel. |
 | — | UI language | **English/Spanish from one bundled `Localization.json`**, chosen in a Settings tab; `uiLocale` in `UserDefaults`, resolved once from macOS's preferred language, then frozen. Stored check text is never translated. |
