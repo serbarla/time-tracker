@@ -47,36 +47,38 @@ enum CheckPresets {
         )
     }
 
-    /// Xiaomi MiMo API off-peak window, expressed as a normal check:
-    /// off-peak every day 00:00–08:00 Shanghai time (= 16:00–24:00 UTC the
-    /// previous day; China has no DST) billed at 0.8× the list rate;
-    /// everything else is peak. Rates are the overseas USD pay-as-you-go
-    /// prices for the V2.6 series (mimo.mi.com, updated 2026-10-21):
-    /// active column = 80% of list, inactive = list.
-    static func xiaomiMiMoPricing() -> Check {
+    /// Xiaomi MiMo API peak window, expressed the same way as the DeepSeek
+    /// preset: the schedule holds the peak window, everything else is off-peak.
+    /// Peak every day 08:00–24:00 Shanghai time (stored as the overnight range
+    /// 08:00–00:00; China has no DST); off-peak is 00:00–08:00. Rates are the
+    /// overseas credit prices for the V2.6 series (mimo.mi.com): active
+    /// column = list rate, inactive = 0.8× the list rate (off-peak coefficient).
+    static func mimoPricing() -> Check {
         var schedule = Check.emptySchedule
         for weekday in Weekday.allCases {
             schedule[weekday.jsonKey] = [
-                HourRange(start: "00:00", end: "08:00"),
+                HourRange(start: "08:00", end: "00:00"),
             ]
         }
 
         let loc = Localization.shared
+        let unit = loc.t("preset.mimo.credits")
+        func credits(_ amount: String) -> String { "\(amount) \(unit)" }
         return Check(
             name: loc.t("preset.mimo.name"),
             timeZoneIdentifier: "Asia/Shanghai",
             schedule: schedule,
             states: CheckStates(
-                active: StateStyle(label: loc.t("preset.mimo.active"), color: .green),
-                inactive: StateStyle(label: loc.t("preset.mimo.inactive"), color: .red)
+                active: StateStyle(label: loc.t("preset.mimo.active"), color: .red),
+                inactive: StateStyle(label: loc.t("preset.mimo.inactive"), color: .green)
             ),
             details: [
-                DetailRow(name: loc.t("preset.mimo.detail.flashInput"), active: "$0.112", inactive: "$0.14"),
-                DetailRow(name: loc.t("preset.mimo.detail.flashCached"), active: "$0.00224", inactive: "$0.0028"),
-                DetailRow(name: loc.t("preset.mimo.detail.flashOutput"), active: "$0.224", inactive: "$0.28"),
-                DetailRow(name: loc.t("preset.mimo.detail.proInput"), active: "$0.348", inactive: "$0.435"),
-                DetailRow(name: loc.t("preset.mimo.detail.proCached"), active: "$0.00288", inactive: "$0.0036"),
-                DetailRow(name: loc.t("preset.mimo.detail.proOutput"), active: "$0.696", inactive: "$0.87"),
+                DetailRow(name: loc.t("preset.mimo.detail.flashCacheHit"), active: credits("2"), inactive: credits("1.6")),
+                DetailRow(name: loc.t("preset.mimo.detail.flashCacheMiss"), active: credits("100"), inactive: credits("80")),
+                DetailRow(name: loc.t("preset.mimo.detail.flashOutput"), active: credits("200"), inactive: credits("160")),
+                DetailRow(name: loc.t("preset.mimo.detail.proCacheHit"), active: credits("2.5"), inactive: credits("2")),
+                DetailRow(name: loc.t("preset.mimo.detail.proCacheMiss"), active: credits("300"), inactive: credits("240")),
+                DetailRow(name: loc.t("preset.mimo.detail.proOutput"), active: credits("600"), inactive: credits("480")),
             ],
             notifyOnFlip: false
         )

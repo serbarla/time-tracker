@@ -88,14 +88,15 @@
     "preset.deepseek.override.midAutumn": "Mid-Autumn",
     "preset.deepseek.override.nationalDay": "National Day",
 
-    "preset.mimo.name": "Xiaomi MiMo pricing",
-    "preset.mimo.active": "Off-peak",
-    "preset.mimo.inactive": "Peak",
-    "preset.mimo.detail.flashInput": "V2.6 Flash input · per 1M tokens",
-    "preset.mimo.detail.flashCached": "V2.6 Flash cached · per 1M tokens",
+    "preset.mimo.name": "MiMo pricing",
+    "preset.mimo.active": "Peak pricing",
+    "preset.mimo.inactive": "Off Peak prices",
+    "preset.mimo.credits": "Credits",
+    "preset.mimo.detail.flashCacheHit": "V2.6 Flash input (cache hit) · per 1M tokens",
+    "preset.mimo.detail.flashCacheMiss": "V2.6 Flash input (cache miss) · per 1M tokens",
     "preset.mimo.detail.flashOutput": "V2.6 Flash output · per 1M tokens",
-    "preset.mimo.detail.proInput": "V2.6 Pro input · per 1M tokens",
-    "preset.mimo.detail.proCached": "V2.6 Pro cached · per 1M tokens",
+    "preset.mimo.detail.proCacheHit": "V2.6 Pro input (cache hit) · per 1M tokens",
+    "preset.mimo.detail.proCacheMiss": "V2.6 Pro input (cache miss) · per 1M tokens",
     "preset.mimo.detail.proOutput": "V2.6 Pro output · per 1M tokens"
   },
   "es": {
@@ -176,8 +177,8 @@
     "notify.furtherNotice": "hasta nuevo aviso",
 
     "preset.deepseek.name": "Precios DeepSeek",
-    "preset.deepseek.active": "Precio alto",
-    "preset.deepseek.inactive": "Fuera de punta · mitad de precio",
+    "preset.deepseek.active": "Peak pricing",
+    "preset.deepseek.inactive": "Off-peak · half price",
     "preset.deepseek.detail.flashInput": "V4.1 Flash entrada · por 1M tokens",
     "preset.deepseek.detail.flashCached": "V4.1 Flash en caché · por 1M tokens",
     "preset.deepseek.detail.flashOutput": "V4.1 Flash salida · por 1M tokens",
@@ -187,14 +188,15 @@
     "preset.deepseek.override.midAutumn": "Medio Otoño",
     "preset.deepseek.override.nationalDay": "Día Nacional",
 
-    "preset.mimo.name": "Precios Xiaomi MiMo",
-    "preset.mimo.active": "Fuera de punta",
-    "preset.mimo.inactive": "En punta",
-    "preset.mimo.detail.flashInput": "V2.6 Flash entrada · por 1M tokens",
-    "preset.mimo.detail.flashCached": "V2.6 Flash en caché · por 1M tokens",
+    "preset.mimo.name": "Precios MiMo",
+    "preset.mimo.active": "Peak pricing",
+    "preset.mimo.inactive": "Off Peak prices",
+    "preset.mimo.credits": "créditos",
+    "preset.mimo.detail.flashCacheHit": "V2.6 Flash entrada (en caché) · por 1M tokens",
+    "preset.mimo.detail.flashCacheMiss": "V2.6 Flash entrada (sin caché) · por 1M tokens",
     "preset.mimo.detail.flashOutput": "V2.6 Flash salida · por 1M tokens",
-    "preset.mimo.detail.proInput": "V2.6 Pro entrada · por 1M tokens",
-    "preset.mimo.detail.proCached": "V2.6 Pro en caché · por 1M tokens",
+    "preset.mimo.detail.proCacheHit": "V2.6 Pro entrada (en caché) · por 1M tokens",
+    "preset.mimo.detail.proCacheMiss": "V2.6 Pro entrada (sin caché) · por 1M tokens",
     "preset.mimo.detail.proOutput": "V2.6 Pro salida · por 1M tokens"
   }
 }
