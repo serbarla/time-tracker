@@ -38,7 +38,7 @@ struct ContentView: View {
 
             Button(loc.t("app.quit")) { NSApp.terminate(nil) }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.red)
                 .frame(maxWidth: .infinity)
                 .padding(6)
         }
@@ -62,24 +62,42 @@ struct ContentView: View {
     }
 }
 
-/// Third tab: the single language dropdown, persisted in `uiLocale`.
+/// Third tab: language (`uiLocale`) and alert lead time (`alertLeadMinutes`).
 @MainActor
 struct SettingsTab: View {
     @EnvironmentObject private var loc: Localization
 
     var body: some View {
-        Picker(loc.t("settings.language"), selection: localeBinding) {
-            Text(loc.t("lang.en")).tag("en")
-            Text(loc.t("lang.es")).tag("es")
+        VStack(alignment: .leading, spacing: 12) {
+            Picker(loc.t("settings.language"), selection: localeBinding) {
+                Text(loc.t("lang.en")).tag("en")
+                Text(loc.t("lang.es")).tag("es")
+            }
+            .pickerStyle(.menu)
+
+            Picker(loc.t("settings.alerts"), selection: alertLeadBinding) {
+                ForEach([1, 2, 3, 5, 10, 15], id: \.self) { minutes in
+                    Text(loc.format("settings.alerts.minutes", minutes)).tag(minutes)
+                }
+            }
+            .pickerStyle(.menu)
         }
-        .pickerStyle(.menu)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var localeBinding: Binding<String> {
         Binding(
             get: { UserDefaults.standard.string(forKey: Localization.localeKey) ?? loc.code },
             set: { loc.setLocale($0) }
+        )
+    }
+
+    /// Global lead time before a window starts; default 2 when unset.
+    private var alertLeadBinding: Binding<Int> {
+        Binding(
+            get: { UserDefaults.standard.object(forKey: "alertLeadMinutes") as? Int ?? 2 },
+            set: { UserDefaults.standard.set($0, forKey: "alertLeadMinutes") }
         )
     }
 }

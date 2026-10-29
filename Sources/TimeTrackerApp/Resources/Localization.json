@@ -9,6 +9,8 @@
     "tab.settings": "Settings",
 
     "settings.language": "Language",
+    "settings.alerts": "Alert before overlap",
+    "settings.alerts.minutes": "%d min",
     "lang.en": "English",
     "lang.es": "Español",
 
@@ -18,6 +20,7 @@
     "status.remaining": "%@ left",
     "status.warning": "Overlap now — until %@",
     "status.detailsNext": "→ %@ from %@",
+    "status.clockCity": "%@-%@",
 
     "edit.empty": "No time zones.",
     "edit.helpEdit": "Edit check",
@@ -75,6 +78,7 @@
     "notify.until": "until %@",
     "notify.from": "from %@",
     "notify.furtherNotice": "until further notice",
+    "notify.lead": "%d min before the overlap",
 
     "preset.deepseek.name": "DeepSeek pricing",
     "preset.deepseek.active": "Peak pricing",
@@ -109,6 +113,8 @@
     "tab.settings": "Ajustes",
 
     "settings.language": "Idioma",
+    "settings.alerts": "Alerta antes de la intersección",
+    "settings.alerts.minutes": "%d min",
     "lang.en": "English",
     "lang.es": "Español",
 
@@ -116,8 +122,9 @@
     "status.details": "Detalles",
     "status.nextIn": "Próximo en %d:%02d:%02d",
     "status.remaining": "%@ restantes",
-    "status.warning": "Solape ahora — hasta las %@",
+    "status.warning": "Intersección ahora — hasta las %@",
     "status.detailsNext": "→ %@ desde %@",
+    "status.clockCity": "%@-%@",
 
     "edit.empty": "Sin zonas.",
     "edit.helpEdit": "Editar zona",
@@ -175,6 +182,7 @@
     "notify.until": "hasta las %@",
     "notify.from": "desde las %@",
     "notify.furtherNotice": "hasta nuevo aviso",
+    "notify.lead": "%d min antes de la intersección",
 
     "preset.deepseek.name": "Precios DeepSeek",
     "preset.deepseek.active": "Peak pricing",

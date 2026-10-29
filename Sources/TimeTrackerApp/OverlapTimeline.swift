@@ -39,14 +39,31 @@ struct OverlapTimeline: View {
                 guard end > start else { continue }
                 let rect = CGRect(
                     x: x(start),
-                    y: size.height * 0.2,
+                    y: 2,
                     width: x(end) - x(start),
-                    height: size.height * 0.6
+                    height: 14
                 )
                 context.fill(
                     Path(roundedRect: rect, cornerRadius: 2),
                     with: .color(bandColor)
                 )
+            }
+
+            for h in 0..<24 {
+                let tickX = x(dayStart.addingTimeInterval(3600 * Double(h)))
+                let isMajor = h % 3 == 0
+                let tick = CGRect(x: tickX, y: isMajor ? 16 : 18, width: 1, height: isMajor ? 4 : 2)
+                context.fill(Path(tick), with: .color(Color(white: 0.6)))
+                if isMajor {
+                    let label = Text(String(format: "%02d", h))
+                        .font(.system(size: 7))
+                        .foregroundStyle(.secondary)
+                    if h == 0 {
+                        context.draw(label, at: CGPoint(x: tickX + 1, y: 25.5), anchor: .leading)
+                    } else {
+                        context.draw(label, at: CGPoint(x: tickX, y: 25.5), anchor: .center)
+                    }
+                }
             }
 
             let nx = x(now)

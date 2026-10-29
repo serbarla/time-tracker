@@ -1,6 +1,7 @@
 import AppKit
 import Carbon
 import Combine
+import QuartzCore
 import SwiftUI
 import TimeTrackerCore
 import UserNotifications
@@ -21,11 +22,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover?
     private var labelTimer: Timer?
     private var boundaryTimer: Timer?
+    private var flipTimer: Timer?
+    private var leadTimer: Timer?
     private var lastIconTint: StateColor?
     private var checksObservation: AnyCancellable?
     private var hotKey: HotKey?
     /// Last observed state per check, in memory only; refreshed on every evaluation.
     private var lastSeenStates: [UUID: Bool] = [:]
+    /// Lead alert already delivered per target window, in memory only.
+    private var lastAlertedWindowStart: [UUID: Date] = [:]
+    private var rotationIndex = 0
+    private var lastRenderedNames: [String] = []
     private var requestedNotificationAuthorization = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -40,10 +47,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         labelTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.updateLabel() }
         }
+
+        // Rotation: cycles through the overlapping names every 20s, with a flip
+        // animation only on this path (never on the 60s tick or store edits).
+        flipTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.lastRenderedNames.count > 1 else { return }
+                self.rotationIndex += 1
+                self.updateLabel(animateTitle: true)
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         labelTimer?.invalidate()
+        flipTimer?.invalidate()
+        leadTimer?.invalidate()
         boundaryTimer?.invalidate()
         hotKey?.unregister()
     }
@@ -87,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
     }
 
-    private func updateLabel() {
+    private func updateLabel(animateTitle: Bool = false) {
         let now = Date()
         let checks = store.checks
         let states = checks.map { OverlapEngine.evaluate(check: $0, now: now) }
@@ -96,8 +115,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let names = zip(checks, states)
             .filter { $0.1.isOverlapping }
             .map { $0.0.name }
+        if names != lastRenderedNames {
+            lastRenderedNames = names
+            rotationIndex = 0
+        }
         if let button = statusItem?.button {
-            button.title = names.isEmpty ? "" : names.joined(separator: ", ") + " "
+            let title = names.isEmpty ? "" : names[rotationIndex % names.count] + " "
+            if animateTitle && names.count > 1 {
+                let t = CATransition()
+                // kCATransitionFlip: no Swift static member, raw value is the documented constant.
+                t.type = CATransitionType(rawValue: "flip")
+                t.subtype = .fromRight
+                t.duration = 0.35
+                button.wantsLayer = true
+                button.layer?.add(t, forKey: "flip")
+            }
+            button.title = title
             button.imagePosition = names.isEmpty ? .imageOnly : .imageRight
         }
 
@@ -109,6 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateIcon(tint: activeColor)
 
         rescheduleBoundaryTimer(at: states.compactMap(\.nextTransition).min())
+        rescheduleLeadAlert(states: states, now: now)
     }
 
     /// Colored (non-template) clock symbol; `contentTintColor` alone renders
@@ -136,6 +170,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         RunLoop.main.add(timer, forMode: .common)
         boundaryTimer = timer
+    }
+
+    /// Global lead time before a window starts (Settings → "Alert before
+    /// overlap", `alertLeadMinutes`, default 2 min).
+    private var alertLeadMinutes: Int {
+        UserDefaults.standard.object(forKey: "alertLeadMinutes") as? Int ?? 2
+    }
+
+    /// One-shot timer at `earliest nextTransition of notifyOnFlip, non-overlapping
+    /// checks − lead time`; invalidated and rescheduled on every `updateLabel`.
+    /// A target already in the past arms nothing: a window whose lead started
+    /// before the app (re)evaluated stays silent, like the flip-notification grace.
+    private func rescheduleLeadAlert(states: [OverlapState], now: Date) {
+        leadTimer?.invalidate()
+        leadTimer = nil
+        let candidates = zip(store.checks, states).compactMap { check, state -> (UUID, Date)? in
+            guard check.notifyOnFlip, !state.isOverlapping, let next = state.nextTransition else { return nil }
+            return (check.id, next)
+        }
+        guard let (id, transition) = candidates.min(by: { $0.1 < $1.1 }) else { return }
+        let target = transition.addingTimeInterval(-TimeInterval(alertLeadMinutes * 60))
+        guard target > now else { return }
+        let timer = Timer(fire: target, interval: 0, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.handleLeadAlert(checkID: id, transition: transition) }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        leadTimer = timer
+    }
+
+    /// Re-checks the window at fire time and delivers at most one banner per
+    /// target window: only if the check still starts at the captured transition
+    /// and is still outside its overlap.
+    private func handleLeadAlert(checkID: UUID, transition: Date) {
+        guard let check = store.checks.first(where: { $0.id == checkID }) else { return }
+        let state = OverlapEngine.evaluate(check: check, now: Date())
+        guard !state.isOverlapping,
+              state.nextTransition == transition,
+              lastAlertedWindowStart[checkID] != transition else { return }
+        lastAlertedWindowStart[checkID] = transition
+        deliverLeadAlert(check: check)
     }
 
     /// Compares this evaluation's states against the last-seen ones (in-memory,
@@ -185,6 +259,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             content.body = loc.t("notify.furtherNotice")
         }
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    /// `check.name` + the global lead phrasing; same unbundled-process exposure
+    /// as `deliverFlipNotification` (both gated by `notifyOnFlip` auth upstream).
+    private func deliverLeadAlert(check: Check) {
+        let loc = Localization.shared
+        let content = UNMutableNotificationContent()
+        content.title = check.name
+        content.body = loc.format("notify.lead", alertLeadMinutes)
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
     }
