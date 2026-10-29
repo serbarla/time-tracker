@@ -85,7 +85,7 @@ struct EditTab: View {
                         store.add(CheckPresets.deepSeekPricing())
                     }
                     Button(loc.t("preset.mimo.name")) {
-                        store.add(CheckPresets.xiaomiMiMoPricing())
+                        store.add(CheckPresets.mimoPricing())
                     }
                 } label: {
                     Label(loc.t("edit.addPreset"), systemImage: "wand.and.stars")
