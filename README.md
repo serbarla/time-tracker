@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Assets/app-icon-1024.png" alt="TimeTracker app icon" width="160">
+</p>
+
 # TimeTracker
 
 A macOS menu-bar utility that answers one question per configured check:
@@ -9,7 +13,7 @@ A **check** is a name, an IANA time zone, and per-weekday working-hour ranges in
 ## Install
 
 1. Download `TimeTracker-<version>.dmg` from the [Releases page](https://github.com/serbarla/time-tracker/releases).
-2. Open the disk image and drag `TimeTracker.app` into the Applications folder.
+2. Open the disk image and drag <img src="Assets/app-icon-1024.png" alt="TimeTracker icon" width="20"> `TimeTracker.app` into the Applications folder.
 3. Eject the disk image, then open TimeTracker from Applications.
 
 Requirements: macOS 26 or newer.
@@ -30,7 +34,7 @@ xattr -d com.apple.quarantine /Applications/TimeTracker.app
 
 ## Uninstall
 
-In the app: Settings -> turn off **Launch at login**, then quit. Then delete `/Applications/TimeTracker.app` and `~/Library/Application Support/TimeTracker`.
+In the app: Settings -> turn off **Launch at login**, then quit. Then delete `/Applications/TimeTracker.app` (<img src="Assets/app-icon-1024.png" alt="TimeTracker app icon" width="16"> in Finder) and `~/Library/Application Support/TimeTracker`.
 
 ## Status
 
@@ -39,6 +43,8 @@ V5 pricing-window release (2026-10-23): named states, transition countdown/upcom
 Localization (2026-10-27): app-owned UI text ships in English and Spanish from a bundled JSON catalog, selected in the Settings tab. No `checks.json` schema change.
 
 MiMo preset consistency (2026-10-29): the "Xiaomi MiMo pricing" preset is now "MiMo pricing", restructured like the DeepSeek preset — the schedule holds the peak window (`08:00–24:00` daily, red "Peak pricing" active; green "Off Peak prices" inactive) and the six rate rows use the V2.6 overseas credit prices with the off-peak column at the 0.8× coefficient. Both pricing presets' state labels intentionally stay English in the Spanish UI. `swift build`, the 8 XCTest cases, and the UI smoke pass. No schema change.
+
+v1.1.0 QOL release (2026-10-29): the menu-bar title rotates through overlapping check names every 20s with a flip animation; a Settings lead-time option posts one pre-overlap notification per `notifyOnFlip` check; status rows show the zone city next to the clock and the timeline gains 24-hour tape markings. Quick wins: the editor form spans to the scrollbar, Settings content sits top-left, the Quit button is red, and the "Details" accordion toggles from its label; Spanish "Solape" is now "Intersección". `swift build`, the 8 XCTest cases, and the UI smoke pass. No schema change.
 
 ## Requirements
 
@@ -66,6 +72,8 @@ open dist/TimeTracker.app            # run bundled app (enables launch-at-login)
 
 `dist/` is gitignored. The bundle id is `com.sergiobarba.timetracker`; the bundle is ad-hoc signed (`codesign --sign -`) and **not notarized** (no Developer ID). `bash Scripts/package-app.sh` also emits `dist/TimeTracker-<version>.dmg` for direct download; the version comes from the newest `vX.Y.Z` git tag and `CFBundleVersion` from the commit count.
 
+The app icon ships from <img src="Assets/app-icon-1024.png" alt="TimeTracker app icon" width="20"> `Assets/app-icon-1024.png`: the packaging script downsizes the 1024px master into `dist/AppIcon.iconset`, compiles it to `AppIcon.icns` inside the bundle, and sets `CFBundleIconFile`. That icon is what Finder, the Applications folder, and the Dock show — the menu bar uses its own tinted clock glyph instead.
+
 ## Testing
 
 ```bash
@@ -74,6 +82,19 @@ bash Scripts/ui-smoke.sh      # UI smoke alone (auto-packages when dist/TimeTrac
 ```
 
 The UI smoke launches the bundled app against a temporary fixture store and drives the real UI via AppleScript UI scripting: launch → menubar title → panel tabs → editor row → quit, then checks that neither the fixture nor the real store was mutated. It never touches real data: `TIMETRACKER_CHECKS_FILE` redirects the store to the fixture for the run; without that variable the production path is used unchanged. UI scripting requires enabling your terminal under System Settings → Privacy & Security → Accessibility.
+
+## Use cases
+
+Every case below is an ordinary check (or preset) — there is no special-case engine code for any of them:
+
+- **AI API pricing windows.** Add the built-in DeepSeek or MiMo pricing preset and the menu bar answers "peak or off-peak right now?" at a glance; the Details disclosure shows the current rate per 1M tokens for each model line.
+- **Distributed team availability.** One check per colleague's zone. While anyone's working hours overlap yours, the clock glyph in the menu bar is tinted with that check's active color and the title rotates through the overlapping names, so you know who is at their desk without asking.
+- **Standup and meeting slots.** Before proposing a time, look at the per-zone rows (or the 24-hour timelines) and confirm the slot lands inside working hours in every participant's zone — including overnight ranges that roll past midnight.
+- **Client and contractor hours.** Track a client's business hours as named states ("Billable" / "Off hours"); the countdown and progress bar show how much of the current window is left, and the upcoming windows tell you when the next one opens.
+- **On-call and support handovers.** Overnight shifts (`end <= start`) with flip notifications at each boundary, plus the global lead time ("2 min before the overlap") as a handover warning; force a check inactive on the days the rotation is suspended with a day override.
+- **Holidays and special days.** `dayOverrides` force active/inactive across an inclusive date range (e.g. force "Holiday" off for National Day) without touching the weekly schedule; timeline bands stay schedule-only, the evaluated state follows the override.
+- **Batch-job windows.** Schedule heavyweight jobs into the cheap window: the timeline shows today's bands and "Next in H:MM:SS" counts down to the flip so you can queue work before the window closes.
+- **English/Spanish UI.** The panel chrome ships in English and Spanish from the bundled catalog — switch in Settings; stored check names and labels are never re-translated.
 
 ## Usage
 
