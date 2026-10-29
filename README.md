@@ -85,10 +85,10 @@ The panel has three tabs: **Status**, **Edit**, **Settings**.
 - When the current instant falls inside a scheduled range, an orange warning shows that range's end time.
 - Each row shows a countdown to the next state flip ("Next in H:MM:SS"), a progress bar through the current window, and the current window plus up to three upcoming windows with state chips and durations; the current window shows time remaining.
 - Checks with `details` rows get a "Details" disclosure showing the current value and, when a flip is known, the next value with its "from" time.
-- The menu-bar title lists the names of overlapping checks, comma-separated; it is blank when none overlap.
+- The menu-bar title shows one overlapping check's name at a time, starting with the first overlapping check and rotating through the overlapping names every 20 seconds with a flip animation; it is blank when none overlap. The rotation is display-only: the icon tint and refresh triggers still use the full overlap set.
 - The menu-bar clock icon is tinted with the first overlapping check's active color (green when none overlap or for v1 checks without `states`).
 - Refreshes every minute, exactly at each check's next state boundary (the menu-bar title updates ~0.25 s after the boundary; the open panel's countdown ticks every second), and immediately whenever checks are added, edited, or deleted.
-- **Notifications:** flip banners are off by default. Enable "Notificar cambios de estado" in the editor to post `<check name>: <new state label>` at each flip, with the next flip time when one is known. The first observation after launch only records state, and flips older than 5 minutes are resynced silently, so changes missed during sleep are never announced late. Notifications require the bundled app; `swift run` has no bundle identifier and never posts. macOS asks for permission the first time an enabled check exists.
+- **Notifications:** flip banners are off by default. Enable "Notificar cambios de estado" in the editor to post `<check name>: <new state label>` at each flip, with the next flip time when one is known. The same toggle also gates a pre-overlap banner: the global lead time from Settings posts `<check name>` with `<N> min before the overlap` before each window starts, and a lead window the app was launched into stays silent (like the 5-minute flip grace). The first observation after launch only records state, and flips older than 5 minutes are resynced silently, so changes missed during sleep are never announced late. Notifications require the bundled app; `swift run` has no bundle identifier and never posts. macOS asks for permission the first time an enabled check exists.
 
 **Edit**
 
@@ -102,7 +102,8 @@ The panel has three tabs: **Status**, **Edit**, **Settings**.
 
 **Settings**
 
-- One **Language** dropdown: `English` / `Español`. Switching re-renders every visible surface immediately; the choice persists in `UserDefaults` (`uiLocale`) and survives relaunch, overriding later macOS language changes.
+- **Language** dropdown: `English` / `Español`. Switching re-renders every visible surface immediately; the choice persists in `UserDefaults` (`uiLocale`) and survives relaunch, overriding later macOS language changes.
+- **Alert before overlap** dropdown: `1`/`2`/`3`/`5`/`10`/`15 min`, default `2 min`. One global lead time applied to every check that has its flip-notification toggle on; it persists in `UserDefaults` (`alertLeadMinutes`) across relaunch. Changes apply on the next minute refresh, and a lead window already in progress stays silent.
 - Only app-owned chrome is localized. Text stored in `checks.json` — check names, state labels/notes, detail names and values, typed override labels — is written in the language active at creation/edit time and is never translated afterwards (a preset created in English stays English).
 
 Default global shortcut: **Control+Option+T**.
@@ -222,8 +223,8 @@ Rules:
 | `Sources/TimeTrackerCore/Weekday.swift` | Monday-first weekdays and JSON keys |
 | `Sources/TimeTrackerCore/OverlapEngine.swift` | Pure `(Check, Date) -> OverlapState` evaluation, including transitions |
 | `Sources/TimeTrackerCore/CheckStore.swift` | `@MainActor` observable store, JSON load/save |
-| `Sources/TimeTrackerApp/TimeTrackerApp.swift` | `NSStatusItem` + `NSPopover`, menubar label and icon tint, boundary-aligned refresh, flip notifications |
-| `Sources/TimeTrackerApp/ContentView.swift` | Panel layout, Status/Edit/Settings tabs, language picker, launch-at-login toggle, quit |
+| `Sources/TimeTrackerApp/TimeTrackerApp.swift` | `NSStatusItem` + `NSPopover`, menubar label rotation and icon tint, boundary-aligned refresh, flip and pre-overlap notifications |
+| `Sources/TimeTrackerApp/ContentView.swift` | Panel layout, Status/Edit/Settings tabs, language and lead-time pickers, launch-at-login toggle, quit |
 | `Sources/TimeTrackerApp/Localization.swift` | `Localization.json` loader, `t`/`format`, `uiLocale` default and switch |
 | `Sources/TimeTrackerApp/Resources/Localization.json` | The `en`/`es` UI copy catalog (identical key sets) |
 | `Sources/TimeTrackerApp/HotKey.swift` | Carbon global hotkey registration |

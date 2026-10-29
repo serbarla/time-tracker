@@ -33,6 +33,7 @@ struct CheckStatusRow: View {
     let now: Date
 
     @EnvironmentObject private var loc: Localization
+    @State private var detailsExpanded = false
 
     private var state: OverlapState { OverlapEngine.evaluate(check: check, now: now) }
     private var styles: CheckStates { check.displayStates }
@@ -68,7 +69,7 @@ struct CheckStatusRow: View {
                 }
                 Text(check.name).fontWeight(.semibold)
                 Spacer()
-                Text(remoteLabel(now))
+                Text(loc.format("status.clockCity", remoteLabel(now), check.cityName))
                     .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -78,7 +79,7 @@ struct CheckStatusRow: View {
                 isOverlapping: state.isOverlapping,
                 activeColor: styles.active.color.swatch
             )
-            .frame(height: 18)
+            .frame(height: 30)
             if let transition = state.nextTransition {
                 HStack(spacing: 8) {
                     Text(countdownText(to: transition))
@@ -131,28 +132,40 @@ struct CheckStatusRow: View {
     }
 
     private var detailsDisclosure: some View {
-        DisclosureGroup {
-            VStack(alignment: .leading, spacing: 2) {
-                ForEach(Array(check.details.enumerated()), id: \.offset) { _, row in
-                    HStack {
-                        Text(row.name)
-                        Spacer()
-                        Text(state.isOverlapping ? row.active : row.inactive)
-                            .foregroundStyle(.secondary)
-                        if let transition = state.nextTransition {
-                            Text(loc.format("status.detailsNext",
-                                            state.isOverlapping ? row.inactive : row.active,
-                                            timeOnly(transition)))
-                                .foregroundStyle(.tertiary)
+        VStack(alignment: .leading, spacing: 4) {
+            Button {
+                detailsExpanded.toggle()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(detailsExpanded ? .degrees(90) : .zero)
+                    Text(loc.t("status.details"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            if detailsExpanded {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(check.details.enumerated()), id: \.offset) { _, row in
+                        HStack {
+                            Text(row.name)
+                            Spacer()
+                            Text(state.isOverlapping ? row.active : row.inactive)
+                                .foregroundStyle(.secondary)
+                            if let transition = state.nextTransition {
+                                Text(loc.format("status.detailsNext",
+                                                state.isOverlapping ? row.inactive : row.active,
+                                                timeOnly(transition)))
+                                    .foregroundStyle(.tertiary)
+                            }
                         }
+                        .font(.caption2)
                     }
-                    .font(.caption2)
                 }
             }
-        } label: {
-            Text(loc.t("status.details"))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
         }
         .padding(.top, 2)
     }
@@ -194,5 +207,13 @@ struct CheckStatusRow: View {
         let f = DateFormatter()
         f.dateFormat = "HH:mm"
         return loc.format("status.warning", f.string(from: end))
+    }
+}
+
+private extension Check {
+    /// Last path component of the zone identifier: "Asia/Shanghai" → "Shanghai".
+    var cityName: String {
+        timeZoneIdentifier.split(separator: "/").last
+            .map { $0.replacingOccurrences(of: "_", with: " ") } ?? timeZoneIdentifier
     }
 }

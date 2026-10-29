@@ -166,8 +166,8 @@ struct CheckEditorView: View {
                         }
                     }
                 }
-                // 20% of the 380pt popover width — keeps the "+" buttons clear of the overlay scrollbar.
-                .padding(.trailing, 76)
+                // 12pt keeps the "+"/"−" buttons clear of the overlay scrollbar on the right edge.
+                .padding(.trailing, 12)
             }
         }
         .padding(20)
